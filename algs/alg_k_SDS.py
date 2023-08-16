@@ -231,16 +231,6 @@ class KSDSAgent:
                 changed = True
                 break
         return changed
-        # old_names_to_consider_list = names_to_consider_list[:]
-        # if not changed:
-        #     paths_to_consider_dict = self.pref_path_rand(paths_to_consider_dict, **kwargs)
-        #     names_to_consider_list = list(paths_to_consider_dict.keys())
-        #     self.names_to_consider_list = names_to_consider_list
-        #     print(f'\n{self.name} >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> pref_path_rand\n')
-        #     print(f'{old_names_to_consider_list=}')
-        #     print(f'new {names_to_consider_list=}')
-        #     print(f'conf_agents_names={self.conf_agents_names}')
-        # return paths_to_consider_dict, names_to_consider_list
 
     def replan(self, **kwargs):
         check_r = self.k_transform(**kwargs)
@@ -700,14 +690,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# def get_nei_k_steps_paths_dict(self, **kwargs):
-#     k = kwargs['k']
-#     nei_k_steps_paths_dict = {}
-#     # use self.conf_agents_names and kwargs['small_iteration']
-#     for agent_name, path in self.nei_paths_dict.items():
-#         # if agent_name in self.conf_agents_names:
-#         #     nei_k_steps_paths_dict[agent_name] = path[:k + k * round(kwargs['small_iteration'] / 10)]
-#         #     continue
-#         nei_k_steps_paths_dict[agent_name] = path[:k]
-#     return nei_k_steps_paths_dict
