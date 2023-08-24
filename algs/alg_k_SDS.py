@@ -10,11 +10,11 @@ from functions import *
 
 from algs.alg_a_star_space_time import a_star
 from algs.test_mapf_alg import test_mapf_alg_from_pic
-from algs.metrics import c_v_check_for_agent, c_e_check_for_agent, build_constraints, \
-    limit_is_crossed, get_agents_in_conf, check_plan, get_alg_info_dict, iteration_print
+from algs.metrics import c_v_check_for_agent, c_e_check_for_agent, build_constraints, get_agents_in_conf, check_plan, get_alg_info_dict, iteration_print
 from algs.metrics import just_check_k_step_plans, just_check_plans
 from algs.metrics import check_single_agent_k_step_c_v, check_single_agent_k_step_c_e
 from algs.metrics import build_k_step_perm_constr_dict
+from funcs_plotter.plotter import Plotter
 
 
 class KSDSAgent:
@@ -521,10 +521,12 @@ def run_k_sds(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
         kwargs['k_small_iter_limit'] = 40
     alg_name = kwargs['alg_name'] if 'alg_name' in kwargs else f'k-SDS'
     iter_limit = kwargs['a_star_iter_limit'] if 'a_star_iter_limit' in kwargs else 1e100
-    plotter = kwargs['plotter'] if 'plotter' in kwargs else None
+    # plotter = kwargs['plotter'] if 'plotter' in kwargs else None
+    map_dim = kwargs['map_dim'] if 'map_dim' in kwargs else None
     middle_plot = kwargs['middle_plot'] if 'middle_plot' in kwargs else False
     final_plot = kwargs['final_plot'] if 'final_plot' in kwargs else True
-    map_dim = kwargs['map_dim'] if 'map_dim' in kwargs else None
+    img_dir = kwargs['img_dir'] if 'img_dir' in kwargs else ''
+    plotter = Plotter(map_dim=map_dim, subplot_rows=1, subplot_cols=2)
     stats_small_iters_list = []
     number_of_finished = 0
 
@@ -561,6 +563,11 @@ def run_k_sds(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
             if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
                 return None, {'agents': agents, 'success_rate': 0}
 
+            # plot
+            if k_step_iteration > 0:
+                full_plans = {agent.name: agent.full_path for agent in agents}
+                plotter.plot_avcr_run(paths_dict=full_plans, nodes=nodes, t=kwargs['k'] * k_step_iteration, img_dir=img_dir)
+
         stats_small_iters_list.append(kwargs['small_iteration'])
         all_paths_are_finished, number_of_finished, func_info = all_move_k_steps(agents, **kwargs)  # agents
         if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
@@ -582,7 +589,7 @@ def run_k_sds(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
                     print(f'#########################################################')
                     print(f"runtime: {alg_info['runtime']}\n{alg_info['dist_runtime']=}\n{cost=}")
                     print(f"a_star_n_closed: {sum(alg_info['a_star_n_closed'])}\n{alg_info['a_star_n_closed_dist']=}")
-                    plotter.plot_mapf_paths(paths_dict=cut_full_plans, nodes=nodes, **kwargs)
+                    # plotter.plot_mapf_paths(paths_dict=cut_full_plans, nodes=nodes, **kwargs)
                 alg_info['success_rate'] = 1
                 alg_info['sol_quality'] = cost
                 alg_info['a_star_calls_per_agent'] = [agent.stats_n_calls for agent in agents]
@@ -602,7 +609,7 @@ def run_k_sds(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
 
 
 def main():
-    n_agents = 200
+    n_agents = 100
     # img_dir = 'my_map_10_10_room.map'  # 10-10
     # img_dir = 'empty-48-48.map'  # 48-48
     img_dir = 'random-64-64-10.map'  # 64-64

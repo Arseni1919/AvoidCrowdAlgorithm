@@ -12,6 +12,18 @@ class Plotter:
         self.subplot_cols = subplot_cols
         self.fig, self.ax = plt.subplots(subplot_rows, subplot_cols, figsize=(14, 7))
 
+    def plot_magnets_run(self, **kwargs):
+        info = {
+            'agent': kwargs['agent'],
+            'paths_dict': kwargs['paths_dict'], 'nodes': kwargs['nodes'],
+            'side_x': self.side_x, 'side_y': self.side_y, 't': kwargs['t'],
+            'img_dir': kwargs['img_dir'] if 'img_dir' in kwargs else '',
+        }
+        plot_step_in_mapf_paths(self.ax[0], info)
+        plot_magnet_agent_view(self.ax[1], info)
+        plt.pause(0.001)
+        # plt.pause(1)
+
     def plot_lists(self, open_list, closed_list, start, goal=None, path=None, nodes=None, a_star_run=False):
         plt.close()
         self.fig, self.ax = plt.subplots(1, 2, figsize=(14, 7))

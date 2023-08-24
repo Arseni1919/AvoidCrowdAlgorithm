@@ -185,6 +185,29 @@ def get_list_a_star(statistics_dict, alg_name, n_agents_list, list_type, is_json
 # --------------------------------------------------------------------------------- #
 # --------------------------------------------------------------------------------- #
 
+def plot_magnet_agent_view(ax, info):
+    ax.cla()
+    # paths_dict = info['paths_dict']
+    agent = info['agent']
+    nodes = info['nodes']
+    side_x = info['side_x']
+    side_y = info['side_y']
+    t = info['t']
+    img_dir = info['img_dir']
+
+    field = np.zeros((side_x, side_y))
+
+    if nodes:
+        for node in nodes:
+            field[node.x, node.y] = agent.b_full_magnet_field[node.x, node.y]
+
+    ax.scatter(agent.curr_node.y, agent.curr_node.x, s=200, c='white')
+    ax.scatter(agent.curr_node.y, agent.curr_node.x, s=100, c='k')
+
+    ax.imshow(field, origin='lower', cmap='hot')
+    ax.set_title(f"{agent.name}'s View (time: {t})")
+
+
 def plot_step_in_mapf_paths(ax, info):
     ax.cla()
     paths_dict = info['paths_dict']

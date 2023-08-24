@@ -1,50 +1,6 @@
 import time
 
 
-def limit_is_crossed(runtime, alg_info, **kwargs):
-    if 'limit_type' not in kwargs:
-        raise RuntimeError('limit_type not in kwargs')
-
-    limit_type = kwargs['limit_type']
-    max_time = kwargs['max_time'] if 'max_time' in kwargs else 60
-    a_star_calls_limit = kwargs['a_star_calls_limit'] if 'a_star_calls_limit' in kwargs else 1e100
-    a_star_closed_nodes_limit = kwargs['a_star_closed_nodes_limit'] if 'a_star_closed_nodes_limit' in kwargs else 1e100
-
-    if limit_type == 'norm_time':
-        crossed = runtime > max_time * 60
-        if crossed:
-            print(f'\n[LIMIT]: norm_time: {runtime} > limit: {max_time * 60}')
-        return crossed
-    elif limit_type == 'dist_time':
-        crossed = alg_info['dist_runtime'] > max_time * 60
-        if crossed:
-            print(f"\n[LIMIT]: dist_runtime: {alg_info['dist_runtime']} > limit: {max_time * 60}")
-        return crossed
-    elif limit_type == 'norm_a_star_calls':
-        crossed = alg_info['a_star_calls_counter'] >= a_star_calls_limit
-        if crossed:
-            print(f"\n[LIMIT]: a_star_calls_counter: {alg_info['a_star_calls_counter']} > limit: {a_star_calls_limit}")
-        return crossed
-    elif limit_type == 'dist_a_star_calls':
-        crossed = alg_info['a_star_calls_counter_dist'] >= a_star_calls_limit
-        if crossed:
-            print(f"\n[LIMIT]: a_star_calls_counter_dist: {alg_info['a_star_calls_counter_dist']} > limit: {a_star_calls_limit}")
-        return crossed
-    elif limit_type == 'norm_a_star_closed':
-        a_star_n_closed_counter = sum(alg_info['a_star_n_closed'])
-        crossed = a_star_n_closed_counter >= a_star_closed_nodes_limit
-        if crossed:
-            print(f"\n[LIMIT]: a_star_n_closed_counter: {a_star_n_closed_counter} > limit: {a_star_closed_nodes_limit}")
-        return crossed
-    elif limit_type == 'dist_a_star_closed':
-        crossed = alg_info['a_star_n_closed_dist'] >= a_star_closed_nodes_limit
-        if crossed:
-            print(f"\n[LIMIT]: a_star_n_closed_dist: {alg_info['a_star_n_closed_dist']} > limit: {a_star_closed_nodes_limit}")
-        return crossed
-    else:
-        raise RuntimeError('no valid limit_type')
-
-
 def get_alg_info_dict(**kwargs):
     alg_info = {'success_rate': 0,
                 'sol_quality': 0,
