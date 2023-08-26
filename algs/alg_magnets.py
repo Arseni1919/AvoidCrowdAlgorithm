@@ -90,8 +90,11 @@ class MagnetsAgent:
         start_time = time.time()
         lowest_node, lowest_value = self.get_nei_lowest_point()
         goal = lowest_node
-        new_path, a_s_info = a_star_xy(start=self.curr_node, goal=goal, nodes=self.nei_nodes,
-                                       nodes_dict=self.nei_nodes_dict,
+        # nodes = self.nodes
+        # nodes_dict = self.nodes_dict
+        nodes = self.nei_nodes
+        nodes_dict = self.nei_nodes_dict
+        new_path, a_s_info = a_star_xy(start=self.curr_node, goal=goal, nodes=nodes, nodes_dict=nodes_dict,
                                        h_func=self.my_h_func_creator(), iter_limit=self.iter_limit, **kwargs)
 
         # goal = self.goal_node
@@ -115,7 +118,8 @@ class MagnetsAgent:
             succeeded = True
         else:
             succeeded = False
-        # rename_nodes_in_path(self.path)
+            # self.path = [self.curr_node]
+            # rename_nodes_in_path(self.path)
         self.path_names = [node.xy_name for node in self.path]
         return succeeded, {'a_s_time': time.time() - start_time, 'a_s_info': a_s_info}
 
@@ -213,8 +217,8 @@ class MagnetsAgent:
                 # h_value /= 1.2
                 self.b_my_magnet_list.append(h_value)
         # set area
-        # self.set_area_circle()
-        self.set_area_line()
+        self.set_area_circle()
+        # self.set_area_line()
         # self.set_area_spear()
 
     def exchange_info(self, **kwargs):
@@ -242,7 +246,7 @@ class MagnetsAgent:
     def plan(self, **kwargs):
         alpha = kwargs['alpha']
         self.build_full_magnet_field()
-        self.calc_a_star_plan()
+        succeeded, info = self.calc_a_star_plan()
 
         if len(self.path) > 1:
             self.next_node = self.path[1]
@@ -477,7 +481,7 @@ def run_magnets(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
                     print(f'#########################################################')
                     print(f"runtime: {alg_info['runtime']}\n{alg_info['dist_runtime']=}\n{cost=}")
                     print(f"a_star_n_closed: {sum(alg_info['a_star_n_closed'])}\n{alg_info['a_star_n_closed_dist']=}")
-                    # plotter.plot_mapf_paths(paths_dict=full_plans, nodes=nodes, **kwargs)
+                    plotter.plot_mapf_paths(paths_dict=full_plans, nodes=nodes, **kwargs)
                 alg_info['success_rate'] = 1
                 alg_info['sol_quality'] = cost
                 alg_info['n_messages'] = np.sum([agent.stats_n_messages for agent in agents])
@@ -495,7 +499,7 @@ def run_magnets(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
 
 
 def main():
-    n_agents = 300
+    n_agents = 400
     # img_dir = 'my_map_10_10_room.map'  # 10-10
     img_dir = 'empty-48-48.map'  # 48-48
     # img_dir = 'random-64-64-10.map'  # 64-64
@@ -508,16 +512,16 @@ def main():
     random_seed = False
     seed = 878
     PLOT_PER = 1
-    PLOT_RATE = 0.5
+    PLOT_RATE = 0.001
 
     # --------------------------------------------------- #
     # --------------------------------------------------- #
     # for the algorithms
-    k = 10
+    k = 5
     alpha = 0.1
     alg_name = f'Magnet'
-    inner_plot = True
-    # inner_plot = False
+    # inner_plot = True
+    inner_plot = False
 
     # --------------------------------------------------- #
     # --------------------------------------------------- #

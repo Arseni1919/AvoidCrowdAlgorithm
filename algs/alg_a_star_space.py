@@ -152,6 +152,9 @@ def a_star_xy(start, goal, nodes, h_func, plotter=None, middle_plot=False, iter_
             path.append(node_current)
             node_current = node_current.parent
         path.reverse()
+    else:
+        # pass
+        print('no no no')
 
     if plotter and middle_plot:
         plotter.plot_lists(open_list=open_nodes.get_nodes_list(),
