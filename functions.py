@@ -73,7 +73,10 @@ def manhattan_distance_nodes(node1, node2):
 
 
 def euclidean_distance_nodes(node1, node2):
-    return np.sqrt((node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2)
+    # p = [node1.x, node1.y]
+    # q = [node2.x, node2.y]
+    return math.dist([node1.x, node1.y], [node2.x, node2.y])
+    # return np.sqrt((node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2)
 
 
 def rename_nodes_in_path(path):

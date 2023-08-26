@@ -75,10 +75,12 @@ class MagnetsAgent:
         return h_func
 
     def get_nei_lowest_point(self):
+        map_to_use = self.b_full_magnet_field
+        # map_to_use = self.b_map
         lowest_node = self.nei_nodes[0]
-        lowest_value = self.b_map[lowest_node.x, lowest_node.y]
+        lowest_value = map_to_use[lowest_node.x, lowest_node.y]
         for node in self.nei_nodes:
-            curr_value = self.b_map[node.x, node.y]
+            curr_value = map_to_use[node.x, node.y]
             if curr_value < lowest_value:
                 lowest_node = node
                 lowest_value = curr_value
@@ -153,7 +155,8 @@ class MagnetsAgent:
             self.b_my_magnet_mask[self.curr_node.x, self.curr_node.y] += 100
         max_r = len(self.b_my_magnet_list)
         # max_r = min(5, len(self.b_my_magnet_list))
-        for i_node in self.nodes:
+        # for i_node in self.nodes:
+        for i_node in self.nei_nodes:
             if abs(i_node.x - self.curr_node.x) > max_r or abs(i_node.y - self.curr_node.y) > max_r:
                 continue
             # around the curr_node
@@ -184,7 +187,8 @@ class MagnetsAgent:
         max_r = len(self.b_my_magnet_list)
         # max_r = min(5, len(self.b_my_magnet_list))
         curr_h_value = self.b_map[self.curr_node.x, self.curr_node.y]
-        for i_node in self.nodes:
+        # for i_node in self.nodes:
+        for i_node in self.nei_nodes:
             if abs(i_node.x - self.curr_node.x) > max_r or abs(i_node.y - self.curr_node.y) > max_r:
                 continue
             # spear (---->-) from the curr_node
@@ -209,8 +213,8 @@ class MagnetsAgent:
                 # h_value /= 1.2
                 self.b_my_magnet_list.append(h_value)
         # set area
-        self.set_area_circle()
-        # self.set_area_line()
+        # self.set_area_circle()
+        self.set_area_line()
         # self.set_area_spear()
 
     def exchange_info(self, **kwargs):
@@ -473,7 +477,7 @@ def run_magnets(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
                     print(f'#########################################################')
                     print(f"runtime: {alg_info['runtime']}\n{alg_info['dist_runtime']=}\n{cost=}")
                     print(f"a_star_n_closed: {sum(alg_info['a_star_n_closed'])}\n{alg_info['a_star_n_closed_dist']=}")
-                    plotter.plot_mapf_paths(paths_dict=full_plans, nodes=nodes, **kwargs)
+                    # plotter.plot_mapf_paths(paths_dict=full_plans, nodes=nodes, **kwargs)
                 alg_info['success_rate'] = 1
                 alg_info['sol_quality'] = cost
                 alg_info['n_messages'] = np.sum([agent.stats_n_messages for agent in agents])
@@ -491,7 +495,7 @@ def run_magnets(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
 
 
 def main():
-    n_agents = 200
+    n_agents = 300
     # img_dir = 'my_map_10_10_room.map'  # 10-10
     img_dir = 'empty-48-48.map'  # 48-48
     # img_dir = 'random-64-64-10.map'  # 64-64
@@ -554,7 +558,9 @@ def main():
     if to_use_profiler:
         profiler.disable()
         stats = pstats.Stats(profiler).sort_stats('cumtime')
-        stats.dump_stats('../stats/results_magnets.pstat')
+        dir_to_save = f'../stats/results_magnets.pstat'
+        stats.dump_stats(dir_to_save)
+        print(f'[STATS]: stats are saved in {dir_to_save}')
 
 
 if __name__ == '__main__':
