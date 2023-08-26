@@ -1,4 +1,4 @@
-from algs.alg_a_star_space_time import a_star
+from algs.alg_a_star_space_time import a_star_xyt
 import random
 import time
 import numpy as np
@@ -15,7 +15,7 @@ def df_a_star(start, goal, nodes, h_func, **kwargs):
     start_time = time.time()
     n_open = 0
     n_closed = 0
-    initial_path, a_s_info = a_star(start, goal, nodes, h_func, df_dict={}, **kwargs)
+    initial_path, a_s_info = a_star_xyt(start, goal, nodes, h_func, df_dict={}, **kwargs)
     n_open += a_s_info['n_open']
     n_closed += a_s_info['n_closed']
     future_constr = a_s_info['future_constr']
@@ -29,7 +29,7 @@ def df_a_star(start, goal, nodes, h_func, **kwargs):
             df_dict.update({last_node.xy_name: True})
             if len(initial_path) - 1 != last_node.t:
                 raise ValueError('len(initial_path) - 1 != last_node.t')
-            new_path, a_s_info = a_star(last_node, goal, nodes, h_func, df_dict=df_dict, start_time=last_node.t, **kwargs)
+            new_path, a_s_info = a_star_xyt(last_node, goal, nodes, h_func, df_dict=df_dict, start_time=last_node.t, **kwargs)
             n_open += a_s_info['n_open']
             n_closed += a_s_info['n_closed']
             future_constr = a_s_info['future_constr']

@@ -8,7 +8,7 @@ from algs.test_mapf_alg import test_mapf_alg_from_pic
 # from algs.metrics import check_for_collisions, c_v_check_for_agent, c_e_check_for_agent
 from algs.metrics import build_constraints, get_agents_in_conf, check_plan, get_alg_info_dict
 from algs.metrics import limit_is_crossed
-from algs.alg_a_star_space_time import a_star
+from algs.alg_a_star_space_time import a_star_xyt
 from algs.alg_depth_first_a_star import df_a_star
 
 
@@ -153,7 +153,7 @@ def main():
         result, info = test_mapf_alg_from_pic(
             algorithm=run_pp,
             alg_name='PP',
-            a_star_func=a_star,
+            a_star_func=a_star_xyt,
             img_dir=img_dir,
             n_agents=n_agents,
             random_seed=random_seed,

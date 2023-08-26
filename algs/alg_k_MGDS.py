@@ -6,7 +6,7 @@ import pstats
 
 from functions import *
 
-from algs.alg_a_star_space_time import a_star
+from algs.alg_a_star_space_time import a_star_xyt
 from algs.alg_k_SDS import KSDSAgent, check_if_limit_is_crossed
 from algs.alg_k_SDS import all_plan_and_find_nei, all_exchange_k_step_paths, all_replan, all_move_k_steps
 from algs.alg_k_SDS import all_cut_full_paths

@@ -8,7 +8,7 @@ import numpy as np
 
 from functions import *
 
-from algs.alg_a_star_space_time import a_star
+from algs.alg_a_star_space_time import a_star_xyt
 from algs.test_mapf_alg import test_mapf_alg_from_pic
 from algs.metrics import c_v_check_for_agent, c_e_check_for_agent, build_constraints, get_agents_in_conf, check_plan, get_alg_info_dict, iteration_print
 from algs.metrics import just_check_k_step_plans, just_check_plans
@@ -70,18 +70,18 @@ class KSDSAgent:
                   f'[step: {kwargs["k_step_iteration"]}]'
                   f'[iter: {kwargs["small_iteration"]}] A* {self.name} ---------- \n')
         if k_time:
-            new_path, a_s_info = a_star(start=self.curr_node, goal=self.goal_node, nodes=self.nodes,
-                                        nodes_dict=self.nodes_dict, h_func=self.h_func,
-                                        v_constr_dict=v_constr_dict, e_constr_dict=e_constr_dict,
-                                        perm_constr_dict=perm_constr_dict,
-                                        plotter=self.plotter, middle_plot=self.middle_plot,
-                                        iter_limit=self.iter_limit, k_time=k_time)
+            new_path, a_s_info = a_star_xyt(start=self.curr_node, goal=self.goal_node, nodes=self.nodes,
+                                            nodes_dict=self.nodes_dict, h_func=self.h_func,
+                                            v_constr_dict=v_constr_dict, e_constr_dict=e_constr_dict,
+                                            perm_constr_dict=perm_constr_dict,
+                                            plotter=self.plotter, middle_plot=self.middle_plot,
+                                            iter_limit=self.iter_limit, k_time=k_time)
         else:
-            new_path, a_s_info = a_star(start=self.curr_node, goal=self.goal_node, nodes=self.nodes,
-                                        nodes_dict=self.nodes_dict, h_func=self.h_func,
-                                        v_constr_dict=v_constr_dict, e_constr_dict=e_constr_dict,
-                                        perm_constr_dict=perm_constr_dict,
-                                        plotter=self.plotter, middle_plot=self.middle_plot, iter_limit=self.iter_limit)
+            new_path, a_s_info = a_star_xyt(start=self.curr_node, goal=self.goal_node, nodes=self.nodes,
+                                            nodes_dict=self.nodes_dict, h_func=self.h_func,
+                                            v_constr_dict=v_constr_dict, e_constr_dict=e_constr_dict,
+                                            perm_constr_dict=perm_constr_dict,
+                                            plotter=self.plotter, middle_plot=self.middle_plot, iter_limit=self.iter_limit)
         if new_path is not None:
             self.path = new_path
             self.h = self.path[-1].h

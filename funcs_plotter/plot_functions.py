@@ -197,12 +197,20 @@ def plot_magnet_agent_view(ax, info):
 
     field = np.zeros((side_x, side_y))
 
+    # magnet field
     if nodes:
         for node in nodes:
             field[node.x, node.y] = agent.b_full_magnet_field[node.x, node.y]
 
+    # an agent
     ax.scatter(agent.curr_node.y, agent.curr_node.x, s=200, c='white')
     ax.scatter(agent.curr_node.y, agent.curr_node.x, s=100, c='k')
+
+    # its path
+    x_path = [node.x for node in agent.path]
+    y_path = [node.y for node in agent.path]
+    # ax.plot(x_path, y_path, c='yellow')
+    ax.plot(y_path, x_path, c='blue')
 
     ax.imshow(field, origin='lower', cmap='hot')
     ax.set_title(f"{agent.name}'s View (time: {t})")

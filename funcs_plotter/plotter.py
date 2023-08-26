@@ -12,6 +12,9 @@ class Plotter:
         self.subplot_cols = subplot_cols
         self.fig, self.ax = plt.subplots(subplot_rows, subplot_cols, figsize=(14, 7))
 
+    def close(self):
+        plt.close()
+
     def plot_magnets_run(self, **kwargs):
         info = {
             'agent': kwargs['agent'],
@@ -26,7 +29,7 @@ class Plotter:
 
     def plot_lists(self, open_list, closed_list, start, goal=None, path=None, nodes=None, a_star_run=False):
         plt.close()
-        self.fig, self.ax = plt.subplots(1, 2, figsize=(14, 7))
+        self.fig, self.ax = plt.subplots(1, 3, figsize=(14, 7))
         field = np.zeros((self.side_x, self.side_y))
 
         if nodes:
@@ -55,6 +58,7 @@ class Plotter:
         #         field[node.x, node.y] = 3
         #         self.ax[0].text(node.x, node.y, f'{node.ID}', bbox={'facecolor': 'yellow', 'alpha': 1, 'pad': 10})
 
+        # open_list
         field = np.zeros((self.side_x, self.side_y))
         for node in open_list:
             if a_star_run:
@@ -64,6 +68,7 @@ class Plotter:
         self.ax[1].imshow(field, origin='lower')
         self.ax[1].set_title('open_list')
 
+        # closed_list
         field = np.zeros((self.side_x, self.side_y))
         for node in closed_list:
             if a_star_run:
