@@ -42,6 +42,9 @@ class MagnetsAgent:
         self.full_path = []
         self.full_path_names = []
         self.map_dim = map_dim
+        # self.speed = random.choice([1, 2])
+        self.speed = 1
+        self.counter = 0
 
         # stats
         self.stats_n_closed = 0
@@ -75,8 +78,10 @@ class MagnetsAgent:
         return h_func
 
     def get_nei_lowest_point(self):
-        map_to_use = self.b_full_magnet_field
-        # map_to_use = self.b_map
+        if self.goal_node.xy_name in self.nei_nodes_dict:
+            map_to_use = self.b_full_magnet_field
+        else:
+            map_to_use = self.b_map
         lowest_node = self.nei_nodes[0]
         lowest_value = map_to_use[lowest_node.x, lowest_node.y]
         for node in self.nei_nodes:
@@ -88,6 +93,11 @@ class MagnetsAgent:
 
     def calc_a_star_plan(self, v_constr_dict=None, e_constr_dict=None, perm_constr_dict=None, k_time=None, **kwargs):
         start_time = time.time()
+        # if self.goal_node.xy_name in self.nei_nodes_dict:
+        #     goal = self.goal_node
+        # else:
+        #     lowest_node, lowest_value = self.get_nei_lowest_point()
+        #     goal = lowest_node
         lowest_node, lowest_value = self.get_nei_lowest_point()
         goal = lowest_node
         nodes = self.nei_nodes
@@ -131,46 +141,50 @@ class MagnetsAgent:
         for node in self.nodes:
             self.b_map[node.x, node.y] = self.h_func(node, self.goal_node)
 
-    def update_nei(self, agents, **kwargs):
+    def get_nei_nodes(self, **kwargs):
         nei_r = kwargs['k']
-        # nei_dist_const = 2 * nei_r + 1
-        self.nei_list, self.nei_dict, self.nei_info_dict = [], {}, {}
-        for agent in agents:
-            if agent.name != self.name:
-                # self.nei_list.append(agent)
-                # self.nei_dict[agent.name] = agent
-                # self.nei_info_dict[agent.name] = {}
-                # curr_distance = manhattan_distance_nodes(self.curr_node, agent.curr_node)
-                curr_distance = euclidean_distance_nodes(self.curr_node, agent.curr_node)
-                if curr_distance <= nei_r:
-                    self.nei_list.append(agent)
-                    self.nei_dict[agent.name] = agent
-                    self.nei_info_dict[agent.name] = {}
-        self.stats_nei_list.append(len(self.nei_list) - 1)
-
+        # nei_r /= 2
         self.nei_nodes = []
         self.nei_nodes_dict = {}
-        for node in self.nodes:
-            curr_distance = euclidean_distance_nodes(self.curr_node, node)
-            if curr_distance <= nei_r:
-                self.nei_nodes.append(node)
-                self.nei_nodes_dict[node.xy_name] = node
+        # if euclidean_distance_nodes(self.curr_node, self.goal_node) > nei_r:
+        #     nei_r += 1
+
+        open_list = [self.curr_node]
+        while len(open_list) > 0:
+            i_node = open_list.pop()
+            i_node_distance = euclidean_distance_nodes(self.curr_node, i_node)
+            if i_node_distance <= nei_r:
+                self.nei_nodes_dict[i_node.xy_name] = i_node
+                for node_nei_name in i_node.neighbours:
+                    if node_nei_name not in self.nei_nodes_dict:
+                        open_list.append(self.nodes_dict[node_nei_name])
+        self.nei_nodes = list(self.nei_nodes_dict.values())
+
+        # for node in self.nodes:
+        #     curr_distance = euclidean_distance_nodes(self.curr_node, node)
+        #     if curr_distance <= nei_r:
+        #         self.nei_nodes.append(node)
+        #         self.nei_nodes_dict[node.xy_name] = node
 
     def set_area_circle(self):
         self.b_my_magnet_mask = np.zeros(self.map_dim)
         if self.curr_node.xy_name == self.goal_node.xy_name:
             self.b_my_magnet_mask[self.curr_node.x, self.curr_node.y] += 100
+        else:
+            self.b_my_magnet_mask[self.curr_node.x, self.curr_node.y] += 50
+
         max_r = len(self.b_my_magnet_list)
         # max_r = min(5, len(self.b_my_magnet_list))
-        # for i_node in self.nodes:
-        for i_node in self.nei_nodes:
-            if abs(i_node.x - self.curr_node.x) > max_r or abs(i_node.y - self.curr_node.y) > max_r:
-                continue
-            # around the curr_node
-            distance = math.floor(euclidean_distance_nodes(i_node, self.curr_node))
-            if distance < max_r:
-                self.b_my_magnet_mask[i_node.x, i_node.y] += self.b_my_magnet_list[distance]
-                # self.b_my_magnet_mask[i_node.x, i_node.y] += 1
+        if max_r > 0:
+            # for i_node in self.nodes:
+            for i_node in self.nei_nodes:
+                if abs(i_node.x - self.curr_node.x) > max_r or abs(i_node.y - self.curr_node.y) > max_r:
+                    continue
+                # around the curr_node
+                distance = math.floor(euclidean_distance_nodes(i_node, self.curr_node))
+                if distance < max_r:
+                    self.b_my_magnet_mask[i_node.x, i_node.y] += self.b_my_magnet_list[distance]
+                    # self.b_my_magnet_mask[i_node.x, i_node.y] += 1
 
     def set_area_line(self):
         self.b_my_magnet_mask = np.zeros(self.map_dim)
@@ -210,7 +224,9 @@ class MagnetsAgent:
     def set_my_magnetism(self):
         self.b_my_magnet_list = []
         if self.curr_node.xy_name != self.goal_node.xy_name:
-            h_value = self.b_map[self.curr_node.x, self.curr_node.y]
+            h_value = self.b_map[self.curr_node.x, self.curr_node.y] + np.log(self.counter + 1)
+            # h_value = self.b_map[self.start_node.x, self.start_node.y]
+            # h_value = self.index
             # h_value = h_value*4
             self.b_my_magnet_list.append(h_value)
             while h_value > 0.5:
@@ -219,44 +235,72 @@ class MagnetsAgent:
                 # h_value /= 1.5
                 # h_value /= 1.2
                 self.b_my_magnet_list.append(h_value)
+        # self.b_my_magnet_list = self.b_my_magnet_list[:3]
         # set area
         self.set_area_circle()
         # self.set_area_line()
         # self.set_area_spear()
 
-    def exchange_info(self, **kwargs):
+    def update_nei(self, agents, **kwargs):
         # set b_my_magnet_list
         self.set_my_magnetism()
+
+        nei_r = kwargs['k']
+        # nei_dist_const = 2 * nei_r + 1
+        self.nei_list, self.nei_dict, self.nei_info_dict = [], {}, {}
+        for agent in agents:
+            if agent.name != self.name:
+                # self.nei_list.append(agent)
+                # self.nei_dict[agent.name] = agent
+                # self.nei_info_dict[agent.name] = {}
+                # curr_distance = manhattan_distance_nodes(self.curr_node, agent.curr_node)
+                curr_distance = euclidean_distance_nodes(self.curr_node, agent.curr_node)
+                if curr_distance <= nei_r:
+                    self.nei_list.append(agent)
+                    self.nei_dict[agent.name] = agent
+                    self.nei_info_dict[agent.name] = {}
+        self.stats_nei_list.append(len(self.nei_list) - 1)
+
+        self.get_nei_nodes(**kwargs)
+
+    def exchange_info(self, **kwargs):
 
         for nei in self.nei_list:
             nei.nei_info_dict[self.name]['path'] = self.path
             nei.nei_info_dict[self.name]['curr_node'] = self.curr_node
             nei.nei_info_dict[self.name]['next_node'] = self.next_node
-            nei.nei_info_dict[self.name]['b_magnet_list'] = self.b_my_magnet_list
             nei.nei_info_dict[self.name]['b_magnet_mask'] = self.b_my_magnet_mask
+            # nei.nei_info_dict[self.name]['b_magnet_list'] = self.b_my_magnet_list
             nei.nei_info_dict[self.name]['h'] = self.b_map[self.curr_node.x, self.curr_node.y]
 
     def build_full_magnet_field(self):
         self.b_full_magnet_field = np.copy(self.b_map)
-        for nei in self.nei_list:
-            nei_magnet_mask = self.nei_info_dict[nei.name]['b_magnet_mask']
-            self.b_full_magnet_field += nei_magnet_mask
-            nei_curr_node = self.nei_info_dict[nei.name]['curr_node']
-            self.b_full_magnet_field[nei_curr_node.x, nei_curr_node.y] += 50
-            # nei_next_node = self.nei_info_dict[nei.name]['next_node']
-            # self.b_full_magnet_field[nei_next_node.x, nei_next_node.y] += 50
+        all_nei_h = [self.nei_info_dict[nei.name]['h'] for nei in self.nei_list]
+        my_h = self.b_map[self.curr_node.x, self.curr_node.y]
+        if my_h < 10 or (len(all_nei_h) > 0 and my_h <= max(all_nei_h)):
+            for nei in self.nei_list:
+                nei_magnet_mask = self.nei_info_dict[nei.name]['b_magnet_mask']
+                self.b_full_magnet_field += nei_magnet_mask
+                # nei_prev_path = self.nei_info_dict[nei.name]['path']
+                # for i_node in nei_prev_path:
+                #     self.b_full_magnet_field[i_node.x, i_node.y] += nei_magnet_mask[i_node.x, i_node.y]
+                # nei_curr_node = self.nei_info_dict[nei.name]['curr_node']
+                # self.b_full_magnet_field[nei_curr_node.x, nei_curr_node.y] += 50
+                # nei_next_node = self.nei_info_dict[nei.name]['next_node']
+                # self.b_full_magnet_field[nei_next_node.x, nei_next_node.y] += 50
 
     def plan(self, **kwargs):
         alpha = kwargs['alpha']
         self.build_full_magnet_field()
+        # if self.counter % self.speed == 0:
         succeeded, info = self.calc_a_star_plan()
-
         if len(self.path) > 1:
             self.next_node = self.path[1]
         else:
             self.next_node = self.path[0]
         if len(self.nei_list) > 0 and self.curr_node.xy_name != self.goal_node.xy_name and random.random() < alpha:
             self.next_node = self.curr_node
+
             # next_pos_name = random.choice(self.curr_node.neighbours)
             # self.next_node = self.nodes_dict[next_pos_name]
 
@@ -266,6 +310,8 @@ class MagnetsAgent:
 
         # next_pos_dict = {}
         # for i_next_pos_name in self.curr_node.neighbours:
+        #     if i_next_pos_name == self.curr_node.xy_name and i_next_pos_name != self.goal_node.xy_name:
+        #         continue
         #     i_next_pos = self.nodes_dict[i_next_pos_name]
         #     next_pos_dict[i_next_pos_name] = self.b_full_magnet_field[i_next_pos.x, i_next_pos.y]
         # # next_pos_name = min(next_pos_dict, key=next_pos_dict.get)
@@ -281,11 +327,9 @@ class MagnetsAgent:
         return True, {}
 
     def correct_next_step(self):
-        my_h = self.b_map[self.curr_node.x, self.curr_node.y]
         for nei in self.nei_list:
             nei_curr_node = self.nei_info_dict[nei.name]['curr_node']
             next_nei_node = self.nei_info_dict[nei.name]['next_node']
-            nei_h = self.nei_info_dict[nei.name]['h']
             # v_c + v_e
             if next_nei_node.xy_name == self.next_node.xy_name or nei_curr_node.xy_name == self.next_node.xy_name:
                 self.next_node = self.curr_node
@@ -301,7 +345,11 @@ class MagnetsAgent:
         # print(f'{self.name} goes to {self.curr_node.xy_name}')
         self.full_path.append(self.curr_node)
         self.full_path_names = [node.xy_name for node in self.full_path]
-        return self.curr_node.xy_name == self.goal_node.xy_name
+        self.counter += 1
+        finished = self.curr_node.xy_name == self.goal_node.xy_name
+        if finished:
+            self.counter = 0
+        return finished
 
 
 def create_agents(start_nodes, goal_nodes, nodes, nodes_dict, h_func, plotter, middle_plot, iter_limit, map_dim):
@@ -453,7 +501,7 @@ def run_magnets(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
         if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
             return None, {'agents': agents, 'success_rate': 0}
 
-        func_info = all_plan(agents, alg_info, **kwargs)  # agents - plan
+        func_info = all_plan(agents, alg_info, **kwargs)  # agents - plan - A*
         if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
             return None, {'agents': agents, 'success_rate': 0}
 
@@ -502,20 +550,20 @@ def run_magnets(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
 
 
 def main():
-    n_agents = 400
+    n_agents = 200
     # img_dir = 'my_map_10_10_room.map'  # 10-10
     # img_dir = 'empty-48-48.map'  # 48-48
     # img_dir = 'random-64-64-10.map'  # 64-64
     # img_dir = 'warehouse-10-20-10-2-1.map'  # 63-161
     # img_dir = 'lt_gallowstemplar_n.map'  # 180-251
-    # img_dir = 'random-32-32-10.map'  # 32-32               | LNS |
-    img_dir = 'empty-32-32.map'  # 32-32
+    img_dir = 'random-32-32-10.map'  # 32-32               | LNS |
+    # img_dir = 'empty-32-32.map'  # 32-32
     # img_dir = 'ht_chantry.map'  # 162-141   | Up to 230 agents with h=w=30, lim=10sec.
 
     # random_seed = True
     random_seed = False
     seed = 878
-    PLOT_PER = 1
+    PLOT_PER = 10
     PLOT_RATE = 0.001
 
     # --------------------------------------------------- #
@@ -523,6 +571,7 @@ def main():
     # for the algorithms
     k = 5
     alpha = 0.1
+    # alpha = 0
     alg_name = f'Magnet'
     # inner_plot = True
     inner_plot = False
@@ -539,10 +588,10 @@ def main():
         print(f'\n[run {i}]')
         result, info = test_mapf_alg_from_pic(
             algorithm=run_magnets,
-            img_dir=img_dir,
-            alg_name=alg_name,
             k=k,
             alpha=alpha,
+            img_dir=img_dir,
+            alg_name=alg_name,
             n_agents=n_agents,
             random_seed=random_seed,
             seed=seed,

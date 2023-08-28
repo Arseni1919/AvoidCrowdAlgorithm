@@ -206,6 +206,12 @@ def plot_magnet_agent_view(ax, info):
     ax.scatter(agent.curr_node.y, agent.curr_node.x, s=200, c='white')
     ax.scatter(agent.curr_node.y, agent.curr_node.x, s=100, c='k')
 
+    # agent's nei poses
+    # x_path = [node.x for node in agent.nei_nodes]
+    # y_path = [node.y for node in agent.nei_nodes]
+    # ax.scatter(y_path, x_path, c='green', alpha=0.05)
+
+
     # its path
     x_path = [node.x for node in agent.path]
     y_path = [node.y for node in agent.path]
@@ -224,6 +230,7 @@ def plot_step_in_mapf_paths(ax, info):
     side_y = info['side_y']
     t = info['t']
     img_dir = info['img_dir']
+    a_name = info['agent'].name if 'agent' in info else 'agent_0'
 
     field = np.zeros((side_x, side_y))
 
@@ -238,7 +245,7 @@ def plot_step_in_mapf_paths(ax, info):
         t_path = path[:t + 1]
         # for node in t_path:
         #     field[node.x, node.y] = 3
-        if agent_name == 'agent_0':
+        if agent_name == a_name:
             ax.scatter(t_path[-1].y, t_path[-1].x, s=200, c='white')
             ax.scatter(t_path[-1].y, t_path[-1].x, s=100, c='k')
         else:
