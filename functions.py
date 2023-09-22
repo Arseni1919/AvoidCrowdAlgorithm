@@ -72,6 +72,7 @@ def manhattan_distance_nodes(node1, node2):
     return abs(node1.x-node2.x) + abs(node1.y-node2.y)
 
 
+@lru_cache(maxsize=128)
 def euclidean_distance_nodes(node1, node2):
     # p = [node1.x, node1.y]
     # q = [node2.x, node2.y]
