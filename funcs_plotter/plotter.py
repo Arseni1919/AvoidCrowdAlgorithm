@@ -85,8 +85,8 @@ class Plotter:
 
     def plot_mapf_paths(self, paths_dict, nodes=None, **kwargs):
         plt.close()
-        plt.rcParams["figure.figsize"] = [8.00, 8.00]
-        plt.rcParams["figure.autolayout"] = True
+        plt.rcParams["figure.figsize"] = [7.00, 7.00]
+        # plt.rcParams["figure.autolayout"] = True
         plot_per = kwargs['plot_per']
         plot_rate = kwargs['plot_rate']
         self.fig, self.ax = plt.subplots()

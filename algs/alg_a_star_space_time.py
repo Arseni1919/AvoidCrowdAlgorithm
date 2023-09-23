@@ -143,29 +143,29 @@ def a_star_xyt(start, goal, nodes, h_func,
                 v_constr_dict, e_constr_dict, perm_constr_dict, max_final_time, **kwargs
             )
 
-            successor_current_time = node_current.t + 1  # h(now, next)
             if node_successor is None:
                 continue
 
-            mag_cost = mag_cost_func(node_successor.x, node_successor.y, successor_current_time)
+            successor_current_t = node_current.t + 1  # h(now, next)
+            mag_cost = mag_cost_func(node_successor.x, node_successor.y, successor_current_t)
             successor_current_g = node_current.g + 1 + magnet_w * mag_cost
 
             # INSIDE OPEN LIST
             if node_successor_status == 'open_nodes':
-                if node_successor.t <= successor_current_time:
+                if node_successor.t <= successor_current_t:
                     continue
                 open_nodes.remove(node_successor)
 
             # INSIDE CLOSED LIST
             elif node_successor_status == 'closed_nodes':
-                if node_successor.t <= successor_current_time:
+                if node_successor.t <= successor_current_t:
                     continue
                 closed_nodes.remove(node_successor)
 
             # NOT IN CLOSED AND NOT IN OPEN LISTS
             else:
                 node_successor.h = h_func(node_successor, goal)
-            node_successor.t = successor_current_time
+            node_successor.t = successor_current_t
             node_successor.g = successor_current_g
             node_successor.parent = node_current
             open_nodes.add(node_successor)

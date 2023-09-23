@@ -66,7 +66,8 @@ class PPAgent:
         self.magnet_field = None
 
     def get_magnet_list(self):
-        h_value = self.h_func(self.start_node, self.goal_node)
+        # h_value = self.h_func(self.start_node, self.goal_node)
+        h_value = 100
         magnet_list = [h_value]
         while h_value > 0.5:
             # h_value /= 4
@@ -187,8 +188,8 @@ def run_pp_fields(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
             if new_path and not limit_is_crossed(runtime, alg_info, **kwargs):
                 agent.path = new_path
                 agent.create_magnet_field()
-                # if order_of_agent > 95:
-                #     plot_magnet_field(agent.path, nei_magnets)
+                if order_of_agent > 3:
+                    plot_magnet_field(agent.path, nei_magnets)
             else:
                 print('###################### random restart ######################')
                 to_continue = True
@@ -222,8 +223,8 @@ def run_pp_fields(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
 def main():
     n_agents = 200
     # img_dir = 'my_map_10_10_room.map'  # 10-10
-    # img_dir = 'empty-48-48.map'  # 48-48
-    img_dir = 'random-64-64-10.map'  # 64-64
+    img_dir = 'empty-48-48.map'  # 48-48
+    # img_dir = 'random-64-64-10.map'  # 64-64
     # img_dir = 'warehouse-10-20-10-2-1.map'  # 63-161
     # img_dir = 'lt_gallowstemplar_n.map'  # 180-251
     # img_dir = 'random-32-32-10.map'  # 32-32               | LNS |
@@ -232,14 +233,15 @@ def main():
     # --------------------------------------------------- #
 
     # for the alg
-    magnet_w = 1
+    # magnet_w = 0
+    magnet_w = 2
 
     # random_seed = True
     random_seed = False
     seed = 839
     final_plot = True
     # final_plot = False
-    PLOT_PER = 1
+    PLOT_PER = 5
     PLOT_RATE = 0.5
 
     A_STAR_ITER_LIMIT = 5e7
