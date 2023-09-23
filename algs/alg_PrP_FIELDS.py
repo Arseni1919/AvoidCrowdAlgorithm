@@ -1,529 +1,272 @@
-import random
-from typing import List
-
-import cProfile
-import pstats
-
 import numpy as np
 
-from functions import *
-
-from algs.alg_a_star_space_time import a_star_xyt
-from algs.alg_a_star_space import a_star_xy
 from algs.test_mapf_alg import test_mapf_alg_from_pic
-from algs.metrics import c_v_check_for_agent, c_e_check_for_agent, build_constraints, \
-    get_agents_in_conf, check_plan, get_alg_info_dict, iteration_print
-from algs.metrics import just_check_k_step_plans, just_check_plans
-from algs.metrics import check_single_agent_k_step_c_v, check_single_agent_k_step_c_e
-from algs.metrics import build_k_step_perm_constr_dict
-from funcs_plotter.plotter import Plotter
+from functions import *
+# from algs.metrics import check_for_collisions, c_v_check_for_agent, c_e_check_for_agent
+from algs.metrics import build_constraints, get_agents_in_conf, check_plan, just_check_plans, get_alg_info_dict
+from functions import limit_is_crossed
+from algs.alg_a_star_space_time import a_star_xyt
+from algs.alg_depth_first_a_star import df_a_star
 
 
-class MagnetsAgent:
-    def __init__(self, index, start_node, goal_node, nodes, nodes_dict, h_func,
-                 plotter, middle_plot,
-                 iter_limit=1e100, map_dim=None):
+def plot_magnet_field(path, data):
+    plt.rcParams["figure.figsize"] = [8.00, 8.00]
+    plt.rcParams["figure.autolayout"] = True
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    # plot field
+    if data is not None:
+        x_l, y_l, z_l = np.nonzero(data > 0)
+        col = data[data > 0]
+        alpha_col = col / max(col)
+        # alpha_col = np.exp(col) / max(np.exp(col))
+        cm = plt.colormaps['Reds']  # , cmap=cm
+        ax.scatter(x_l, y_l, z_l, c=col, alpha=alpha_col, marker='s', cmap=cm)
+    # plot line
+    if path:
+        path_x = [node.x for node in path]
+        path_y = [node.y for node in path]
+        path_z = list(range(len(path_x)))
+        ax.plot(path_x, path_y, path_z)
+    plt.show()
+    # plt.pause(2)
+
+
+def get_nei_nodes(curr_node, nei_r, nodes_dict):
+    nei_nodes_dict = {}
+    open_list = [curr_node]
+    while len(open_list) > 0:
+        i_node = open_list.pop()
+        i_node_distance = euclidean_distance_nodes(curr_node, i_node)
+        if i_node_distance <= nei_r:
+            nei_nodes_dict[i_node.xy_name] = i_node
+            for node_nei_name in i_node.neighbours:
+                if node_nei_name not in nei_nodes_dict:
+                    open_list.append(nodes_dict[node_nei_name])
+    nei_nodes = list(nei_nodes_dict.values())
+    return nei_nodes, nei_nodes_dict
+
+
+class PPAgent:
+    def __init__(self, index: int, start_node, goal_node, nodes, nodes_dict, h_func, **kwargs):
         self.index = index
         self.name = f'agent_{index}'
         self.start_node = start_node
-        self.curr_node = start_node
-        self.next_node = start_node
+        self.start_xy = self.start_node.xy_name
         self.goal_node = goal_node
+        self.goal_xy = self.goal_node.xy_name
         self.nodes = nodes
         self.nodes_dict = nodes_dict
-        self.nei_nodes = []
-        self.nei_nodes_dict = {}
         self.h_func = h_func
-        self.plotter = plotter
-        self.middle_plot = middle_plot
-        self.iter_limit = iter_limit
+        self.map_dim = kwargs['map_dim']
         self.path = []
-        self.path_names = []
-        self.full_path = []
-        self.full_path_names = []
-        self.map_dim = map_dim
-        # self.speed = random.choice([1, 2])
-        self.speed = 1
-        self.counter = 0
-
-        # stats
         self.stats_n_closed = 0
         self.stats_n_calls = 0
         self.stats_runtime = 0
-        self.stats_n_messages = 0
-        self.stats_n_step_m = 0
-        self.stats_n_step_m_list = []
-        self.stats_nei_list = []
-        # nei
-        self.nei_list = []
-        self.nei_dict = {}
-        self.nei_info_dict = {}
+        self.magnet_field = None
 
-        # map
-        self.b_map = np.ones(self.map_dim) * -1
-        self.b_my_magnet_mask = np.zeros(self.map_dim)
-        self.b_full_magnet_field = None
-        self.b_my_magnet_list = []
-        self.init_grid_weights()
+    def get_magnet_list(self):
+        h_value = self.h_func(self.start_node, self.goal_node)
+        magnet_list = [h_value]
+        while h_value > 0.5:
+            # h_value /= 4
+            h_value /= 2
+            # h_value /= 1.5
+            # h_value /= 1.2
+            magnet_list.append(h_value)
+        return magnet_list
 
-    def my_h_func_creator(self):
-        my_h = self.b_map[self.curr_node.x, self.curr_node.y]
-        new_h_table = np.copy(self.b_full_magnet_field) / np.max(self.b_full_magnet_field) * my_h
-
-        def h_func(from_node, to_node):
-            h_value = new_h_table[from_node.x, from_node.y]
-            # h_value = self.b_map[from_node.x, from_node.y]
-            return h_value
-
-        return h_func
-
-    def get_nei_lowest_point(self):
-        if self.goal_node.xy_name in self.nei_nodes_dict:
-            map_to_use = self.b_full_magnet_field
-        else:
-            map_to_use = self.b_map
-        lowest_node = self.nei_nodes[0]
-        lowest_value = map_to_use[lowest_node.x, lowest_node.y]
-        for node in self.nei_nodes:
-            curr_value = map_to_use[node.x, node.y]
-            if curr_value < lowest_value:
-                lowest_node = node
-                lowest_value = curr_value
-        return lowest_node, lowest_value
-
-    def calc_a_star_plan(self, v_constr_dict=None, e_constr_dict=None, perm_constr_dict=None, k_time=None, **kwargs):
-        start_time = time.time()
-        lowest_node, lowest_value = self.get_nei_lowest_point()
-        goal = lowest_node
-        nodes = self.nei_nodes
-        nodes_dict = self.nei_nodes_dict
-        # nodes = self.nodes
-        # nodes_dict = self.nodes_dict
-        new_path, a_s_info = a_star_xy(start=self.curr_node, goal=goal, nodes=nodes, nodes_dict=nodes_dict,
-                                       h_func=self.my_h_func_creator(), iter_limit=self.iter_limit, **kwargs)
-
-        if new_path is not None:
-            self.path = new_path
-            succeeded = True
-        else:
-            succeeded = False
-        self.path_names = [node.xy_name for node in self.path]
-        return succeeded, {'a_s_time': time.time() - start_time, 'a_s_info': a_s_info}
-
-    def init_grid_weights(self):
-        # h_func(node_successor, goal)
-        for node in self.nodes:
-            self.b_map[node.x, node.y] = self.h_func(node, self.goal_node)
-
-    def get_nei_nodes(self, **kwargs):
-        nei_r = kwargs['k']
-        self.nei_nodes = []
-        self.nei_nodes_dict = {}
-
-        open_list = [self.curr_node]
-        while len(open_list) > 0:
-            i_node = open_list.pop()
-            i_node_distance = euclidean_distance_nodes(self.curr_node, i_node)
-            if i_node_distance <= nei_r:
-                self.nei_nodes_dict[i_node.xy_name] = i_node
-                for node_nei_name in i_node.neighbours:
-                    if node_nei_name not in self.nei_nodes_dict:
-                        open_list.append(self.nodes_dict[node_nei_name])
-        self.nei_nodes = list(self.nei_nodes_dict.values())
-
-    def set_area_circle(self):
-        self.b_my_magnet_mask = np.zeros(self.map_dim)
-        if self.curr_node.xy_name == self.goal_node.xy_name:
-            self.b_my_magnet_mask[self.curr_node.x, self.curr_node.y] += 100
-        else:
-            self.b_my_magnet_mask[self.curr_node.x, self.curr_node.y] += 50
-
-        max_r = len(self.b_my_magnet_list)
+    def set_area_circle(self, i_time, curr_node, magnet_list, nei_nodes, nei_nodes_dict):
+        max_r = len(magnet_list)
         # max_r = min(5, len(self.b_my_magnet_list))
         if max_r > 0:
             # for i_node in self.nodes:
-            for i_node in self.nei_nodes:
-                if abs(i_node.x - self.curr_node.x) > max_r or abs(i_node.y - self.curr_node.y) > max_r:
+            for i_node in nei_nodes:
+                if abs(i_node.x - curr_node.x) > max_r or abs(i_node.y - curr_node.y) > max_r:
                     continue
                 # around the curr_node
-                distance = math.floor(euclidean_distance_nodes(i_node, self.curr_node))
+                distance = math.floor(euclidean_distance_nodes(i_node, curr_node))
                 if distance < max_r:
-                    self.b_my_magnet_mask[i_node.x, i_node.y] += self.b_my_magnet_list[distance]
-                    # self.b_my_magnet_mask[i_node.x, i_node.y] += 1
+                    self.magnet_field[i_node.x, i_node.y, i_time] += magnet_list[distance]
 
-    def set_area_line(self):
-        self.b_my_magnet_mask = np.zeros(self.map_dim)
-        next_node = self.curr_node
-        for m_value_index, m_value in enumerate(self.b_my_magnet_list):
-            self.b_my_magnet_mask[next_node.x, next_node.y] += m_value
-            next_pos_dict = {}
-            for i_next_pos_name in next_node.neighbours:
-                i_next_pos = self.nodes_dict[i_next_pos_name]
-                next_pos_dict[i_next_pos_name] = self.b_map[i_next_pos.x, i_next_pos.y]
-                # next_pos_dict[i_next_pos_name] = self.b_full_magnet_field[i_next_pos.x, i_next_pos.y]
-            min_value = min(next_pos_dict.values())
-            min_pos_list = [k for k, v in next_pos_dict.items() if v == min_value]
-            next_pos_name = random.choice(min_pos_list)
-            next_node = self.nodes_dict[next_pos_name]
-            if m_value_index > 4:
-                break
-
-    def set_area_spear(self):
-        self.b_my_magnet_mask = np.zeros(self.map_dim)
-        max_r = len(self.b_my_magnet_list)
-        # max_r = min(5, len(self.b_my_magnet_list))
-        curr_h_value = self.b_map[self.curr_node.x, self.curr_node.y]
-        # for i_node in self.nodes:
-        for i_node in self.nei_nodes:
-            if abs(i_node.x - self.curr_node.x) > max_r or abs(i_node.y - self.curr_node.y) > max_r:
-                continue
-            # spear (---->-) from the curr_node
-            # distance = math.floor(euclidean_distance_nodes(i_node, self.curr_node))
-            distance = manhattan_distance_nodes(i_node, self.curr_node)
-            if distance < max_r:
-                i_h_value = self.b_map[i_node.x, i_node.y]
-                diff = curr_h_value - i_h_value
-                if 0 <= diff < max_r:
-                    self.b_my_magnet_mask[i_node.x, i_node.y] += self.b_my_magnet_list[distance]
-
-    def set_my_magnetism(self):
-        self.b_my_magnet_list = []
-        if self.curr_node.xy_name != self.goal_node.xy_name:
-            h_value = self.b_map[self.curr_node.x, self.curr_node.y] + np.log(self.counter + 1)
-            self.b_my_magnet_list.append(h_value)
-            while h_value > 0.5:
-                # h_value /= 4
-                h_value /= 2
-                # h_value /= 1.5
-                # h_value /= 1.2
-                self.b_my_magnet_list.append(h_value)
-        # set area
-        self.set_area_circle()
-        # self.set_area_line()
-        # self.set_area_spear()
-
-    def update_nei(self, agents, **kwargs):
-        # set b_my_magnet_list
-        self.set_my_magnetism()
-
-        nei_r = kwargs['k']
-        # nei_dist_const = 2 * nei_r + 1
-        self.nei_list, self.nei_dict, self.nei_info_dict = [], {}, {}
-        for agent in agents:
-            if agent.name != self.name:
-                curr_distance = euclidean_distance_nodes(self.curr_node, agent.curr_node)
-                if curr_distance <= nei_r:
-                    self.nei_list.append(agent)
-                    self.nei_dict[agent.name] = agent
-                    self.nei_info_dict[agent.name] = {}
-        self.stats_nei_list.append(len(self.nei_list) - 1)
-
-        self.get_nei_nodes(**kwargs)
-
-    def exchange_info(self, **kwargs):
-
-        for nei in self.nei_list:
-            nei.nei_info_dict[self.name]['path'] = self.path
-            nei.nei_info_dict[self.name]['curr_node'] = self.curr_node
-            nei.nei_info_dict[self.name]['next_node'] = self.next_node
-            nei.nei_info_dict[self.name]['b_magnet_mask'] = self.b_my_magnet_mask
-            # nei.nei_info_dict[self.name]['b_magnet_list'] = self.b_my_magnet_list
-            nei.nei_info_dict[self.name]['h'] = self.b_map[self.curr_node.x, self.curr_node.y]
-
-    def build_full_magnet_field(self):
-        self.b_full_magnet_field = np.copy(self.b_map)
-        all_nei_h = [self.nei_info_dict[nei.name]['h'] for nei in self.nei_list]
-        my_h = self.b_map[self.curr_node.x, self.curr_node.y]
-        if my_h < 10 or (len(all_nei_h) > 0 and my_h <= max(all_nei_h)):
-            for nei in self.nei_list:
-                nei_magnet_mask = self.nei_info_dict[nei.name]['b_magnet_mask']
-                self.b_full_magnet_field += nei_magnet_mask
-
-    def plan(self, **kwargs):
-        alpha = kwargs['alpha']
-        self.build_full_magnet_field()
-        # if self.counter % self.speed == 0:
-        succeeded, info = self.calc_a_star_plan()
-        if len(self.path) > 1:
-            self.next_node = self.path[1]
-        else:
-            self.next_node = self.path[0]
-        if len(self.nei_list) > 0 and self.curr_node.xy_name != self.goal_node.xy_name and random.random() < alpha:
-            self.next_node = self.curr_node
-
-        return True, {}
-
-    def correct_next_step(self):
-        for nei in self.nei_list:
-            nei_curr_node = self.nei_info_dict[nei.name]['curr_node']
-            next_nei_node = self.nei_info_dict[nei.name]['next_node']
-            # v_c + v_e
-            if next_nei_node.xy_name == self.next_node.xy_name or nei_curr_node.xy_name == self.next_node.xy_name:
-                self.next_node = self.curr_node
-                return
-            # e_c
-            # if next_nei_node.xy_name == self.curr_node.xy_name and nei_curr_node.xy_name == self.next_node.xy_name:
-            #     self.next_node = self.curr_node
-            #     return
-
-    def make_step(self, **kwargs):
-        self.correct_next_step()
-        self.curr_node = self.next_node
-        # print(f'{self.name} goes to {self.curr_node.xy_name}')
-        self.full_path.append(self.curr_node)
-        self.full_path_names = [node.xy_name for node in self.full_path]
-        self.counter += 1
-        finished = self.curr_node.xy_name == self.goal_node.xy_name
-        if finished:
-            self.counter = 0
-        return finished
+    def create_magnet_field(self):
+        self.magnet_field = np.zeros((self.map_dim[0], self.map_dim[1], len(self.path)))
+        magnet_list = self.get_magnet_list()
+        for i_time, node in enumerate(self.path):
+            nei_nodes, nei_nodes_dict = get_nei_nodes(node, len(magnet_list), self.nodes_dict)
+            self.set_area_circle(i_time, node, magnet_list, nei_nodes, nei_nodes_dict)
+        # plot_magnet_field(self.magnet_field)
 
 
-def create_agents(start_nodes, goal_nodes, nodes, nodes_dict, h_func, plotter, middle_plot, iter_limit, map_dim):
-    # Creating agents
-    agents = []
-    agents_dict = {}
-    n_agent = 0
+def create_agents(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
+    agents, agents_dict = [], {}
+    index = 0
     for start_node, goal_node in zip(start_nodes, goal_nodes):
-        agent = MagnetsAgent(n_agent, start_node, goal_node, nodes, nodes_dict, h_func, plotter, middle_plot,
-                             iter_limit,
-                             map_dim)
-        agents.append(agent)
-        agents_dict[agent.name] = agent
-        n_agent += 1
-
+        new_agent = PPAgent(index, start_node, goal_node, nodes, nodes_dict, h_func, **kwargs)
+        agents.append(new_agent)
+        agents_dict[new_agent.name] = new_agent
+        index += 1
     return agents, agents_dict
 
 
-def all_find_nei(agents: List[MagnetsAgent], **kwargs):
-    runtime, runtime_dist = 0, []
-    succeeded_list = []
-    for agent in agents:
-        # find_nei
-        start_time = time.time()
-        agent.update_nei(agents, **kwargs)
-
-        # stats
-        end_time = time.time() - start_time
-        runtime += end_time
-        runtime_dist.append(end_time)
-
-    func_info = {
-        'runtime': runtime,
-        'dist_runtime': max(runtime_dist),
-        'all_succeeded': all(succeeded_list),
-    }
-    return func_info
+def build_nei_magnets(higher_agents, **kwargs):
+    if len(higher_agents) == 0:
+        return None, 0
+    map_dim = kwargs['map_dim']
+    longest_path_length = max([len(agent.path) for agent in higher_agents])
+    nei_magnets = np.zeros((map_dim[0], map_dim[1], longest_path_length))  # x, y, t
+    for nei_agent in higher_agents:
+        curr_path_len = len(nei_agent.path)
+        nei_magnets[:, :, :curr_path_len] += nei_agent.magnet_field
+    nei_magnets /= np.max(nei_magnets)
+    return nei_magnets, longest_path_length
 
 
-def all_plan(agents: List[MagnetsAgent], alg_info, **kwargs):
-    i_run_str = f'[i_run: {kwargs["i_run"]}]' if 'i_run' in kwargs else ''
-    img_str = f'[{kwargs["img_dir"]}]' if 'img_dir' in kwargs else ''
-    print(f'\n\n[runtime={alg_info["runtime"]:0.2f} sec.][dist_runtime={alg_info["dist_runtime"]:0.2f} sec.]'
-          f'\n{img_str}({kwargs["alg_name"]}){i_run_str}[finished: {kwargs["number_of_finished"]}/{kwargs["n_agents"]}]'
-          f'[step: {kwargs["step_iteration"]}]\n')
+def build_mag_cost_func(higher_agents, nei_magnets, longest_path_length,  **kwargs):
+    if len(higher_agents) == 0:
+        return lambda x, y, t: 0
 
-    runtime, runtime_dist = 0, []
-    succeeded_list = []
-    for agent in agents:
-        # create initial plan
-        start_time = time.time()
-        succeeded, info = agent.plan(**kwargs)
-        # stats
-        end_time = time.time() - start_time
-        runtime += end_time
-        runtime_dist.append(end_time)
-        succeeded_list.append(succeeded)
-
-    func_info = {
-        'runtime': runtime,
-        'dist_runtime': max(runtime_dist),
-        'all_succeeded': all(succeeded_list),
-    }
-    return func_info
+    def mag_cost_func(x, y, t):
+        if t >= longest_path_length:
+            return 0
+        return nei_magnets[x, y, t]
+    return mag_cost_func
 
 
-def all_move_a_step(agents: List[MagnetsAgent], **kwargs):
-    all_paths_are_finished_list = []
-    for agent in agents:
-        agent_is_finished = agent.make_step(**kwargs)
-        all_paths_are_finished_list.append(agent_is_finished)
-
-    number_of_finished = sum(all_paths_are_finished_list)
-    all_paths_are_finished = all(all_paths_are_finished_list)
-    func_info = {}
-    return all_paths_are_finished, number_of_finished, func_info
-
-
-def all_exchange_info(agents: List[MagnetsAgent], **kwargs):
-    # k = kwargs['k']
-    # check_radius = k
-    runtime, runtime_dist = 0, []
-
-    # exchange paths
-    for agent in agents:
-        start_time = time.time()
-        agent.exchange_info(**kwargs)
-        # stats
-        end_time = time.time() - start_time
-        runtime += end_time
-        runtime_dist.append(end_time)
-
-    func_info = {
-        'runtime': runtime,
-        'dist_runtime': max(runtime_dist)
-    }
-    # return there_are_collisions, c_v, c_e, func_info
-    return False, [], [], func_info
+def update_path(update_agent, order_of_agent, higher_agents, nodes, nodes_dict, h_func, **kwargs):
+    # print('\rFUNC: update_path', end='')
+    sub_results = {agent.name: agent.path for agent in higher_agents}
+    v_constr_dict, e_constr_dict, perm_constr_dict = build_constraints(nodes, sub_results)
+    # build mag_cost function
+    nei_magnets, longest_path_length = build_nei_magnets(higher_agents, **kwargs)
+    mag_cost_func = build_mag_cost_func(higher_agents, nei_magnets, longest_path_length,  **kwargs)
+    # print('\rBEFORE A*', end='')
+    print(f'\n ---------- ({kwargs["alg_name"]}) A* order: {order_of_agent} ---------- \n')
+    a_star_func = kwargs['a_star_func']
+    new_path, a_s_info = a_star_func(start=update_agent.start_node, goal=update_agent.goal_node,
+                                     nodes=nodes, h_func=h_func, mag_cost_func=mag_cost_func,
+                                     nodes_dict=nodes_dict,
+                                     v_constr_dict=v_constr_dict,
+                                     e_constr_dict=e_constr_dict,
+                                     perm_constr_dict=perm_constr_dict, **kwargs)
+    # stats
+    update_agent.stats_n_calls += 1
+    return new_path, a_s_info, nei_magnets
 
 
 def run_pp_fields(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
-    if 'k' not in kwargs:
-        raise RuntimeError("'k' is not in kwargs")
-    if 'k_step_iteration_limit' in kwargs:
-        k_step_iteration_limit = kwargs['k_step_iteration_limit']
-    else:
-        k_step_iteration_limit = 1000
-        kwargs['k_step_iteration_limit'] = k_step_iteration_limit
-        kwargs['k_small_iter_limit'] = 40
-    alg_name = kwargs['alg_name'] if 'alg_name' in kwargs else f'k-SDS'
-    iter_limit = kwargs['a_star_iter_limit'] if 'a_star_iter_limit' in kwargs else 1e100
-    map_dim = kwargs['map_dim'] if 'map_dim' in kwargs else None
-    middle_plot = kwargs['middle_plot'] if 'middle_plot' in kwargs else False
-    final_plot = kwargs['final_plot'] if 'final_plot' in kwargs else True
-    img_dir = kwargs['img_dir'] if 'img_dir' in kwargs else ''
-    inner_plot = kwargs['inner_plot'] if 'inner_plot' in kwargs else False
+    runtime = 0
     plotter = kwargs['plotter'] if 'plotter' in kwargs else None
-    # plotter = None
-    if plotter:
-        plotter.close()
-    plotter = Plotter(map_dim=map_dim, subplot_rows=1, subplot_cols=2)
-    stats_small_iters_list = []
-    number_of_finished = 0
+    final_plot = kwargs['final_plot'] if 'final_plot' in kwargs else True
+    alg_name = kwargs['alg_name']
 
-    # Creating agents
-    agents, agents_dict = create_agents(start_nodes, goal_nodes, nodes, nodes_dict, h_func, plotter, middle_plot,
-                                        iter_limit, map_dim)
-    kwargs['n_agents'] = len(agents)
+    agents, agents_dict = create_agents(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs)
+    agent_names = [agent.name for agent in agents]
 
-    # alg info dict
     alg_info = get_alg_info_dict()
 
-    # Distributed Part
-    for step_iteration in range(1000000):
-        kwargs['step_iteration'] = step_iteration
-        kwargs['small_iteration'] = 0
-        kwargs['number_of_finished'] = number_of_finished
+    # ITERATIONS
+    for iteration in range(1000000):
 
-        func_info = all_find_nei(agents, **kwargs)  # agents - find nei
-        if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
-            return None, {'agents': agents, 'success_rate': 0}
-
-        _, _, _, func_info = all_exchange_info(agents, **kwargs)  # agents - exchange
-        if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
-            return None, {'agents': agents, 'success_rate': 0}
-
-        func_info = all_plan(agents, alg_info, **kwargs)  # agents - plan - A*
-        if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
-            return None, {'agents': agents, 'success_rate': 0}
-
-        _, _, _, func_info = all_exchange_info(agents, **kwargs)  # agents - exchange
-        if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
-            return None, {'agents': agents, 'success_rate': 0}
-
-        all_paths_are_finished, number_of_finished, func_info = all_move_a_step(agents, **kwargs)  # agents - step
-        if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
-            return None, {'agents': agents, 'success_rate': 0}
-
-        # plot
-        if step_iteration > 0 and plotter and inner_plot:
-            full_plans = {agent.name: agent.full_path for agent in agents}
-            plotter.plot_magnets_run(paths_dict=full_plans, nodes=nodes, t=step_iteration, img_dir=img_dir,
-                                     agent=agents[0])
-
-        full_plans = {agent.name: agent.full_path for agent in agents}
-        # iteration_print(agents, full_plans, alg_name, alg_info, alg_info['runtime'], step_iteration)
-        if all_paths_are_finished:
-            there_is_col, c_v, c_e, cost = just_check_plans(full_plans)
-            if there_is_col:
-                raise RuntimeError('uff')
-            else:
-                if final_plot:
-                    print(f'#########################################################')
-                    print(f'#########################################################')
-                    print(f'#########################################################')
-                    print(f"runtime: {alg_info['runtime']}\n{alg_info['dist_runtime']=}\n{cost=}")
-                    print(f"a_star_n_closed: {sum(alg_info['a_star_n_closed'])}\n{alg_info['a_star_n_closed_dist']=}")
-                    plotter.plot_mapf_paths(paths_dict=full_plans, nodes=nodes, **kwargs)
-                alg_info['success_rate'] = 1
-                alg_info['sol_quality'] = cost
-                alg_info['n_messages'] = np.sum([agent.stats_n_messages for agent in agents])
-                alg_info['m_per_step'] = np.sum([np.mean(agent.stats_n_step_m_list) for agent in agents])
-                alg_info['n_steps'] = step_iteration + 1
-                alg_info['n_nei'] = np.sum([np.mean(agent.stats_nei_list) for agent in agents])
-                # alg_info['avr_n_nei'] = np.mean([np.mean(agent.stats_nei_list) for agent in agents])
-            return full_plans, alg_info
-
-        if step_iteration > k_step_iteration_limit - 1:
-            print(f'\n[LIMIT]: step_iteration: {step_iteration} > limit: {k_step_iteration_limit}')
+        if limit_is_crossed(runtime, alg_info, **kwargs):
             break
 
-    return None, {'agents': agents, 'success_rate': 0}
+        # PICK A RANDOM ORDER
+        random.shuffle(agent_names)
+        new_order = [agents_dict[agent_name] for agent_name in agent_names]
+
+        # PLAN
+        higher_agents = []
+        to_continue = False
+        for order_of_agent, agent in enumerate(new_order):
+            new_path, a_s_info, nei_magnets = update_path(agent, order_of_agent, higher_agents, nodes, nodes_dict, h_func, **kwargs)
+            alg_info['a_star_calls_counter'] += 1
+            alg_info['a_star_runtimes'].append(a_s_info['runtime'])
+            alg_info['a_star_n_closed'].append(a_s_info['n_closed'])
+            # STATS + LIMITS
+            runtime += a_s_info['runtime']
+            if new_path and not limit_is_crossed(runtime, alg_info, **kwargs):
+                agent.path = new_path
+                agent.create_magnet_field()
+                # if order_of_agent > 95:
+                #     plot_magnet_field(agent.path, nei_magnets)
+            else:
+                print('###################### random restart ######################')
+                to_continue = True
+                break
+            higher_agents.append(agent)
+
+        if to_continue:
+            continue
+
+        # CHECK PLAN
+        plan = {agent.name: agent.path for agent in agents}
+        there_is_col, c_v, c_e, cost = just_check_plans(plan)
+        if not there_is_col:
+            if final_plot:
+                print(f'#########################################################')
+                print(f'#########################################################')
+                print(f'#########################################################')
+                print(f"runtime: {runtime}\n{cost=}")
+                print(f"a_star_n_closed: {sum(alg_info['a_star_n_closed'])}")
+                plotter.plot_mapf_paths(paths_dict=plan, nodes=nodes, **kwargs)
+
+            alg_info['success_rate'] = 1
+            alg_info['sol_quality'] = cost
+            alg_info['runtime'] = runtime
+            alg_info['a_star_calls_per_agent'] = [agent.stats_n_calls for agent in agents]
+            return plan, alg_info
+
+    return None, alg_info
 
 
 def main():
     n_agents = 200
     # img_dir = 'my_map_10_10_room.map'  # 10-10
     # img_dir = 'empty-48-48.map'  # 48-48
-    # img_dir = 'random-64-64-10.map'  # 64-64
+    img_dir = 'random-64-64-10.map'  # 64-64
     # img_dir = 'warehouse-10-20-10-2-1.map'  # 63-161
     # img_dir = 'lt_gallowstemplar_n.map'  # 180-251
-    img_dir = 'random-32-32-10.map'  # 32-32               | LNS |
-    # img_dir = 'empty-32-32.map'  # 32-32
-    # img_dir = 'ht_chantry.map'  # 162-141   | Up to 230 agents with h=w=30, lim=10sec.
+    # img_dir = 'random-32-32-10.map'  # 32-32               | LNS |
+
+    # --------------------------------------------------- #
+    # --------------------------------------------------- #
+
+    # for the alg
+    magnet_w = 1
 
     # random_seed = True
     random_seed = False
-    seed = 878
-    PLOT_PER = 10
-    PLOT_RATE = 0.001
+    seed = 839
+    final_plot = True
+    # final_plot = False
+    PLOT_PER = 1
+    PLOT_RATE = 0.5
 
-    # --------------------------------------------------- #
-    # --------------------------------------------------- #
-    # for the algorithms
-    k = 5
-    alpha = 0.1
-    # alpha = 0
-    alg_name = f'Magnet'
-    # inner_plot = True
-    inner_plot = False
-
-    # --------------------------------------------------- #
-    # --------------------------------------------------- #
+    A_STAR_ITER_LIMIT = 5e7
+    A_STAR_CALLS_LIMIT = 1000
 
     to_use_profiler = True
-    # to_use_profiler = False
     profiler = cProfile.Profile()
     if to_use_profiler:
         profiler.enable()
+
     for i in range(3):
         print(f'\n[run {i}]')
         result, info = test_mapf_alg_from_pic(
             algorithm=run_pp_fields,
-            k=k,
-            alpha=alpha,
+            alg_name='PrP-Magnets',
+            magnet_w=magnet_w,
+            a_star_func=a_star_xyt,
             img_dir=img_dir,
-            alg_name=alg_name,
             n_agents=n_agents,
             random_seed=random_seed,
             seed=seed,
-            final_plot=True,
-            a_star_iter_limit=5e7,
-            # limit_type='norm_time',
-            limit_type='dist_time',
+            limit_type='norm_time',
+            a_star_iter_limit=A_STAR_ITER_LIMIT,
+            a_star_calls_limit=A_STAR_CALLS_LIMIT,
             max_time=50,
-            a_star_closed_nodes_limit=1e6,
-            inner_plot=inner_plot,
+            final_plot=final_plot,
             plot_per=PLOT_PER,
             plot_rate=PLOT_RATE,
         )
@@ -537,9 +280,7 @@ def main():
     if to_use_profiler:
         profiler.disable()
         stats = pstats.Stats(profiler).sort_stats('cumtime')
-        dir_to_save = f'../stats/results_magnets.pstat'
-        stats.dump_stats(dir_to_save)
-        print(f'[STATS]: stats are saved in {dir_to_save}')
+        stats.dump_stats('../stats/results_pp.pstat')
 
 
 if __name__ == '__main__':

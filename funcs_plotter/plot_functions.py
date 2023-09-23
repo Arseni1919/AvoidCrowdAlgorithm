@@ -231,6 +231,7 @@ def plot_step_in_mapf_paths(ax, info):
     t = info['t']
     img_dir = info['img_dir']
     a_name = info['agent'].name if 'agent' in info else 'agent_0'
+    longest_path = info['longest_path']
 
     field = np.zeros((side_x, side_y))
 
@@ -259,7 +260,7 @@ def plot_step_in_mapf_paths(ax, info):
     #     field[path[-1].x, path[-1].y] = 5
 
     ax.imshow(field, origin='lower')
-    ax.set_title(f'Paths in <{img_dir}> (time: {t})')
+    ax.set_title(f'Map: {img_dir[:-4]} (time: {t}/{longest_path})')
 
 
 def plot_success_rate(ax, info):

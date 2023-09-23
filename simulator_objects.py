@@ -24,8 +24,8 @@ class Node:
         self.g_dict = {}
 
     def f(self):
-        return self.t + self.h
-        # return self.g + self.h
+        # return self.t + self.h
+        return self.g + self.h
 
     def reset(self, target_nodes=None, **kwargs):
         if 'start_time' in kwargs:

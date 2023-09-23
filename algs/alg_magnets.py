@@ -1,13 +1,5 @@
-import random
 from typing import List
-
-import cProfile
-import pstats
-
-import numpy as np
-
 from functions import *
-
 from algs.alg_a_star_space_time import a_star_xyt
 from algs.alg_a_star_space import a_star_xy
 from algs.test_mapf_alg import test_mapf_alg_from_pic

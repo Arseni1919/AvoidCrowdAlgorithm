@@ -74,7 +74,7 @@ def run_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
         if limit_is_crossed(runtime, alg_info, **kwargs):
             break
 
-        # PICK A RANDOM ORDE
+        # PICK A RANDOM ORDER
         random.shuffle(agent_names)
         new_order = [agents_dict[agent_name] for agent_name in agent_names]
 

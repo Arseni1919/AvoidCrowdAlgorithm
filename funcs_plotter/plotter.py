@@ -85,6 +85,8 @@ class Plotter:
 
     def plot_mapf_paths(self, paths_dict, nodes=None, **kwargs):
         plt.close()
+        plt.rcParams["figure.figsize"] = [8.00, 8.00]
+        plt.rcParams["figure.autolayout"] = True
         plot_per = kwargs['plot_per']
         plot_rate = kwargs['plot_rate']
         self.fig, self.ax = plt.subplots()
@@ -96,6 +98,7 @@ class Plotter:
                     'paths_dict': paths_dict, 'nodes': nodes,
                     'side_x': self.side_x, 'side_y': self.side_y, 't': t,
                     'img_dir': kwargs['img_dir'] if 'img_dir' in kwargs else '',
+                    'longest_path': longest_path,
                 }
                 plot_step_in_mapf_paths(self.ax, info)
                 # plt.pause(1)

@@ -99,6 +99,8 @@ def a_star_xyt(start, goal, nodes, h_func,
     """
     new_t in v_constr_dict[successor_xy_name]
     """
+    mag_cost_func = kwargs['mag_cost_func']
+    magnet_w = kwargs['magnet_w']
     start_time = time.time()
     # start, goal, nodes = deepcopy_nodes(start, goal, nodes)  # heavy!
     start, goal, nodes = reset_nodes(start, goal, nodes, **kwargs)
@@ -145,6 +147,9 @@ def a_star_xyt(start, goal, nodes, h_func,
             if node_successor is None:
                 continue
 
+            mag_cost = mag_cost_func(node_successor.x, node_successor.y, successor_current_time)
+            successor_current_g = node_current.g + 1 + magnet_w * mag_cost
+
             # INSIDE OPEN LIST
             if node_successor_status == 'open_nodes':
                 if node_successor.t <= successor_current_time:
@@ -161,7 +166,7 @@ def a_star_xyt(start, goal, nodes, h_func,
             else:
                 node_successor.h = h_func(node_successor, goal)
             node_successor.t = successor_current_time
-            node_successor.g = node_successor.t
+            node_successor.g = successor_current_g
             node_successor.parent = node_current
             open_nodes.add(node_successor)
 
