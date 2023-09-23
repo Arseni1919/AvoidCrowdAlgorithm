@@ -140,7 +140,6 @@ def update_path(update_agent, order_of_agent, higher_agents, nodes, nodes_dict, 
     # build mag_cost function
     nei_magnets, longest_path_length = build_nei_magnets(higher_agents, **kwargs)
     mag_cost_func = build_mag_cost_func(higher_agents, nei_magnets, longest_path_length,  **kwargs)
-    # print('\rBEFORE A*', end='')
     print(f'\n ---------- ({kwargs["alg_name"]}) A* order: {order_of_agent} ---------- \n')
     a_star_func = kwargs['a_star_func']
     new_path, a_s_info = a_star_func(start=update_agent.start_node, goal=update_agent.goal_node,
