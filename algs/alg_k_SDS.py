@@ -56,32 +56,37 @@ class KSDSAgent:
         self.conf_agents_names = []
         self.names_to_consider_list = []
 
-    def calc_a_star_plan(self, v_constr_dict=None, e_constr_dict=None, perm_constr_dict=None, k_time=None, **kwargs):
-        start_time = time.time()
+    def prep_constraints(self, v_constr_dict, e_constr_dict, perm_constr_dict):
         if not v_constr_dict:
             v_constr_dict = {node.xy_name: [] for node in self.nodes}
         if not e_constr_dict:
             e_constr_dict = {node.xy_name: [] for node in self.nodes}
         if not perm_constr_dict:
             perm_constr_dict = {node.xy_name: [] for node in self.nodes}
+        return v_constr_dict, e_constr_dict, perm_constr_dict
+
+    def prep_magnet_data(self, **kwargs):
+        if 'mag_cost_func' in kwargs:
+            return kwargs['magnet_w'], kwargs['mag_cost_func']
+        else:
+            return 0, None
+
+    def calc_a_star_plan(self, v_constr_dict=None, e_constr_dict=None, perm_constr_dict=None, k_time=None, **kwargs):
+        start_time = time.time()
+        v_constr_dict, e_constr_dict, perm_constr_dict = self.prep_constraints(v_constr_dict, e_constr_dict, perm_constr_dict)
+        magnet_w, mag_cost_func = self.prep_magnet_data(**kwargs)
         if kwargs["small_iteration"] > 100:
             print(f'\n ---------- ({kwargs["alg_name"]}) '
                   f'[finished: {kwargs["number_of_finished"]}]'
                   f'[step: {kwargs["k_step_iteration"]}]'
                   f'[iter: {kwargs["small_iteration"]}] A* {self.name} ---------- \n')
-        if k_time:
-            new_path, a_s_info = a_star_xyt(start=self.curr_node, goal=self.goal_node, nodes=self.nodes,
-                                            nodes_dict=self.nodes_dict, h_func=self.h_func,
-                                            v_constr_dict=v_constr_dict, e_constr_dict=e_constr_dict,
-                                            perm_constr_dict=perm_constr_dict,
-                                            plotter=self.plotter, middle_plot=self.middle_plot,
-                                            iter_limit=self.iter_limit, k_time=k_time)
-        else:
-            new_path, a_s_info = a_star_xyt(start=self.curr_node, goal=self.goal_node, nodes=self.nodes,
-                                            nodes_dict=self.nodes_dict, h_func=self.h_func,
-                                            v_constr_dict=v_constr_dict, e_constr_dict=e_constr_dict,
-                                            perm_constr_dict=perm_constr_dict,
-                                            plotter=self.plotter, middle_plot=self.middle_plot, iter_limit=self.iter_limit)
+        new_path, a_s_info = a_star_xyt(start=self.curr_node, goal=self.goal_node, nodes=self.nodes,
+                                        nodes_dict=self.nodes_dict, h_func=self.h_func,
+                                        v_constr_dict=v_constr_dict, e_constr_dict=e_constr_dict,
+                                        perm_constr_dict=perm_constr_dict,
+                                        magnet_w=magnet_w, mag_cost_func=mag_cost_func,
+                                        plotter=self.plotter, middle_plot=self.middle_plot,
+                                        iter_limit=self.iter_limit, k_time=k_time)
         if new_path is not None:
             self.path = new_path
             self.h = self.path[-1].h
@@ -122,7 +127,7 @@ class KSDSAgent:
             return succeeded, info
         return False, {}
 
-    def exchange_paths(self):
+    def exchange_paths(self, **kwargs):
         for nei in self.nei_list:
             nei.nei_paths_dict[self.name] = self.path
             nei.nei_h_dict[self.name] = self.h
@@ -144,12 +149,12 @@ class KSDSAgent:
         p_h, p_l = kwargs['p_h'], kwargs['p_l']
         paths_to_consider_dict = {}
         # just index
-        for agent_name, path in self.nei_paths_dict.items():
-            if self.nei_dict[agent_name].index < self.index:
+        for nei_agent_name, nei_path in self.nei_paths_dict.items():
+            if self.nei_dict[nei_agent_name].index < self.index:
                 if random.random() < p_h:
-                    paths_to_consider_dict[agent_name] = self.nei_paths_dict[agent_name]
+                    paths_to_consider_dict[nei_agent_name] = nei_path
             elif random.random() < p_l:
-                paths_to_consider_dict[agent_name] = self.nei_paths_dict[agent_name]
+                paths_to_consider_dict[nei_agent_name] = nei_path
         return paths_to_consider_dict
 
     def pref_path_length(self, **kwargs):
@@ -433,7 +438,7 @@ def all_exchange_k_step_paths(agents: List[KSDSAgent], **kwargs):
     # exchange paths
     for agent in agents:
         start_time = time.time()
-        agent.exchange_paths()
+        agent.exchange_paths(**kwargs)
         # stats
         end_time = time.time() - start_time
         runtime += end_time

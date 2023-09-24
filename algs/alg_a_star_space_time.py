@@ -89,7 +89,10 @@ def reset_nodes(start, goal, nodes, **kwargs):
 
 
 def k_time_check(node_current, **kwargs):
-    return node_current.t >= kwargs['k_time'] if 'k_time' in kwargs else False
+    if 'k_time' in kwargs and kwargs['k_time'] is not None:
+        return node_current.t >= kwargs['k_time']
+    return False
+    # return node_current.t >= kwargs['k_time'] if 'k_time' in kwargs else False
 
 
 def a_star_xyt(start, goal, nodes, h_func,

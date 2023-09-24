@@ -89,12 +89,7 @@ def build_nei_magnets(higher_agents, **kwargs):
 def build_mag_cost_func(higher_agents, nei_magnets, longest_path_length,  **kwargs):
     if len(higher_agents) == 0:
         return lambda x, y, t: 0
-
-    def mag_cost_func(x, y, t):
-        if t >= longest_path_length:
-            return 0
-        return nei_magnets[x, y, t]
-    return mag_cost_func
+    return lambda x, y, t: nei_magnets[x, y, t] if t < longest_path_length else 0
 
 
 def update_path(update_agent, order_of_agent, higher_agents, nodes, nodes_dict, h_func, **kwargs):
