@@ -11,7 +11,7 @@ from algs.alg_k_SDS import KSDSAgent, check_if_limit_is_crossed
 from algs.alg_k_SDS import all_plan_and_find_nei, all_exchange_k_step_paths, all_replan, all_move_k_steps
 from algs.alg_k_SDS import all_cut_full_paths
 from algs.test_mapf_alg import test_mapf_alg_from_pic
-from algs.metrics import build_constraints, limit_is_crossed, just_check_plans, build_k_step_perm_constr_dict
+from algs.metrics import build_constraints, just_check_plans, build_k_step_perm_constr_dict
 from algs.metrics import get_alg_info_dict, iteration_print, just_check_k_step_plans
 from algs.metrics import check_single_agent_k_step_c_v, check_single_agent_k_step_c_e
 

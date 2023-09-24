@@ -1,5 +1,5 @@
 import numpy as np
-
+from funcs_plotter.plot_functions import *
 from algs.test_mapf_alg import test_mapf_alg_from_pic
 from functions import *
 # from algs.metrics import check_for_collisions, c_v_check_for_agent, c_e_check_for_agent
@@ -7,44 +7,6 @@ from algs.metrics import build_constraints, get_agents_in_conf, check_plan, just
 from functions import limit_is_crossed
 from algs.alg_a_star_space_time import a_star_xyt
 from algs.alg_depth_first_a_star import df_a_star
-
-
-def plot_magnet_field(path, data):
-    plt.rcParams["figure.figsize"] = [8.00, 8.00]
-    plt.rcParams["figure.autolayout"] = True
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    # plot field
-    if data is not None:
-        x_l, y_l, z_l = np.nonzero(data > 0)
-        col = data[data > 0]
-        alpha_col = col / max(col)
-        # alpha_col = np.exp(col) / max(np.exp(col))
-        cm = plt.colormaps['Reds']  # , cmap=cm
-        ax.scatter(x_l, y_l, z_l, c=col, alpha=alpha_col, marker='s', cmap=cm)
-    # plot line
-    if path:
-        path_x = [node.x for node in path]
-        path_y = [node.y for node in path]
-        path_z = list(range(len(path_x)))
-        ax.plot(path_x, path_y, path_z)
-    plt.show()
-    # plt.pause(2)
-
-
-def get_nei_nodes(curr_node, nei_r, nodes_dict):
-    nei_nodes_dict = {}
-    open_list = [curr_node]
-    while len(open_list) > 0:
-        i_node = open_list.pop()
-        i_node_distance = euclidean_distance_nodes(curr_node, i_node)
-        if i_node_distance <= nei_r:
-            nei_nodes_dict[i_node.xy_name] = i_node
-            for node_nei_name in i_node.neighbours:
-                if node_nei_name not in nei_nodes_dict:
-                    open_list.append(nodes_dict[node_nei_name])
-    nei_nodes = list(nei_nodes_dict.values())
-    return nei_nodes, nei_nodes_dict
 
 
 class PPAgent:
@@ -63,11 +25,12 @@ class PPAgent:
         self.stats_n_closed = 0
         self.stats_n_calls = 0
         self.stats_runtime = 0
+
         self.magnet_field = None
 
     def get_magnet_list(self):
         # h_value = self.h_func(self.start_node, self.goal_node)
-        h_value = 100
+        h_value = 16
         magnet_list = [h_value]
         while h_value > 0.5:
             # h_value /= 4
@@ -154,7 +117,7 @@ def update_path(update_agent, order_of_agent, higher_agents, nodes, nodes_dict, 
     return new_path, a_s_info, nei_magnets
 
 
-def run_pp_fields(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
+def run_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
     runtime = 0
     plotter = kwargs['plotter'] if 'plotter' in kwargs else None
     final_plot = kwargs['final_plot'] if 'final_plot' in kwargs else True
@@ -188,8 +151,8 @@ def run_pp_fields(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
             if new_path and not limit_is_crossed(runtime, alg_info, **kwargs):
                 agent.path = new_path
                 agent.create_magnet_field()
-                if order_of_agent > 3:
-                    plot_magnet_field(agent.path, nei_magnets)
+                # if order_of_agent > 3:
+                #     plot_magnet_field(agent.path, nei_magnets)
             else:
                 print('###################### random restart ######################')
                 to_continue = True
@@ -221,7 +184,7 @@ def run_pp_fields(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
 
 
 def main():
-    n_agents = 200
+    n_agents = 40
     # img_dir = 'my_map_10_10_room.map'  # 10-10
     img_dir = 'empty-48-48.map'  # 48-48
     # img_dir = 'random-64-64-10.map'  # 64-64
@@ -234,14 +197,15 @@ def main():
 
     # for the alg
     # magnet_w = 0
-    magnet_w = 2
+    magnet_w = 1
+    # magnet_w = 2
 
     # random_seed = True
     random_seed = False
     seed = 839
     final_plot = True
     # final_plot = False
-    PLOT_PER = 5
+    PLOT_PER = 1
     PLOT_RATE = 0.5
 
     A_STAR_ITER_LIMIT = 5e7
@@ -255,8 +219,8 @@ def main():
     for i in range(3):
         print(f'\n[run {i}]')
         result, info = test_mapf_alg_from_pic(
-            algorithm=run_pp_fields,
-            alg_name='PrP-Magnets',
+            algorithm=run_magnets_pp,
+            alg_name='Magnets-PrP',
             magnet_w=magnet_w,
             a_star_func=a_star_xyt,
             img_dir=img_dir,

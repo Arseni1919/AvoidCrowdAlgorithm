@@ -1,6 +1,29 @@
 from globals import *
 
 
+def plot_magnet_field(path, data):
+    plt.rcParams["figure.figsize"] = [8.00, 8.00]
+    plt.rcParams["figure.autolayout"] = True
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    # plot field
+    if data is not None:
+        x_l, y_l, z_l = np.nonzero(data > 0)
+        col = data[data > 0]
+        alpha_col = col / max(col)
+        # alpha_col = np.exp(col) / max(np.exp(col))
+        cm = plt.colormaps['Reds']  # , cmap=cm
+        ax.scatter(x_l, y_l, z_l, c=col, alpha=alpha_col, marker='s', cmap=cm)
+    # plot line
+    if path:
+        path_x = [node.x for node in path]
+        path_y = [node.y for node in path]
+        path_z = list(range(len(path_x)))
+        ax.plot(path_x, path_y, path_z)
+    plt.show()
+    # plt.pause(2)
+
+
 def get_line_or_marker(index, kind):
     if kind == 'l':
         lines = ['--', '-', '-.', ':']
@@ -260,7 +283,7 @@ def plot_step_in_mapf_paths(ax, info):
     #     field[path[-1].x, path[-1].y] = 5
 
     ax.imshow(field, origin='lower')
-    ax.set_title(f'Map: {img_dir[:-4]} (time: {t}/{longest_path})')
+    ax.set_title(f'Map: {img_dir[:-4]}, N_agents: {n} (time: {t}/{longest_path})')
 
 
 def plot_success_rate(ax, info):
