@@ -23,9 +23,10 @@ def build_nei_magnets(agents_to_consider_list, **kwargs):
     k = kwargs['k']
     nei_magnets = np.zeros((map_dim[0], map_dim[1], k))  # x, y, t
     for nei_agent in agents_to_consider_list:
-        curr_path_len = len(nei_agent.path)
-        nei_magnets[:, :, :curr_path_len] += nei_agent.magnet_field
-    nei_magnets /= np.max(nei_magnets)
+        nei_magnets += nei_agent.magnet_field
+    max_number_in_matrix = np.max(nei_magnets)
+    if max_number_in_matrix > 0:
+        nei_magnets /= max_number_in_matrix
     return nei_magnets
 
 
@@ -43,12 +44,19 @@ class KMagnetPrPAgent(KSDSAgent):
                          map_dim)
         # nei
         self.finished_k_iter = False
+        self.nei_finished_dict = {}
         self.agents_to_consider_dict = {}
         self.magnet_field = None
 
+    def reset_k_step(self, **kwargs):
+        k = kwargs['k']
+        self.finished_k_iter = False
+        self.nei_finished_dict = {}
+        self.magnet_field = np.zeros((self.map_dim[0], self.map_dim[1], k))
+        self.create_paths_to_consider_dict(**kwargs)
+
     def update_nei(self, agents, **kwargs):
         h = kwargs['h']
-        # nei_r = k
         nei_r = h
         self.last_path_change_iter = 0
         self.conf_agents_names = []
@@ -62,8 +70,8 @@ class KMagnetPrPAgent(KSDSAgent):
                     self.nei_dict[agent.name] = agent
                     self.nei_h_dict[agent.name] = None
                     self.nei_paths_dict[agent.name] = None
-        self.finished_k_iter = False
-        self.create_paths_to_consider_dict(**kwargs)
+        # reset
+        self.reset_k_step(**kwargs)
 
     def create_paths_to_consider_dict(self, **kwargs):
         p_h, p_l = kwargs['p_h'], kwargs['p_l']
@@ -79,10 +87,12 @@ class KMagnetPrPAgent(KSDSAgent):
     def change_priority(self, priority, **kwargs):
         self.index = priority
         self.name = f'agent_{self.index}'
+        self.reset_k_step(**kwargs)
 
     def get_magnet_list(self):
         # h_value = self.h_func(self.start_node, self.goal_node)
-        h_value = 16
+        # h_value = 16
+        h_value = 4
         magnet_list = [h_value]
         while h_value > 0.5:
             # h_value /= 4
@@ -106,35 +116,43 @@ class KMagnetPrPAgent(KSDSAgent):
                     self.magnet_field[i_node.x, i_node.y, i_time] += magnet_list[distance]
 
     def create_magnet_field(self, **kwargs):
-        k = kwargs['k']
-        self.magnet_field = np.zeros((self.map_dim[0], self.map_dim[1], k))
+        if self.curr_node.xy_name == self.goal_node.xy_name:  # if the agent reached the goal
+            return
         magnet_list = self.get_magnet_list()
         for i_time, node in enumerate(self.path):
             nei_nodes, nei_nodes_dict = get_nei_nodes(node, len(magnet_list), self.nodes_dict)
             self.set_area_circle(i_time, node, magnet_list, nei_nodes, nei_nodes_dict)
         # plot_magnet_field(self.magnet_field)
 
-    def create_magnet_field_and_exchange_paths(self, **kwargs):
-        # create magnet field
-        self.create_magnet_field(**kwargs)
+    def exchange_data(self, **kwargs):
         # exchange paths
         for nei in self.nei_list:
+            nei.nei_finished_dict[self.name] = self.finished_k_iter
             nei.nei_paths_dict[self.name] = self.path
             nei.nei_h_dict[self.name] = self.h
             self.stats_n_messages += 1
             self.stats_n_step_m += 1
 
-    def is_ready_to_plan(self):
+    def agents_to_consider_are_finished(self):
         for agent_name, agent in self.agents_to_consider_dict.items():
-            if not agent.finished_k_iter:
+            if not self.nei_finished_dict[agent_name]:
                 return False
         return True
 
     def plan(self, **kwargs):
+        """
+        Output options:
+        - already has a plan
+        - other higher priority agents are not ready yet with their plans
+        - failed to build the plan
+        - successfully built the plan
+        """
+        we_good = True
+        # two things to say: is the agent waiting
         if self.finished_k_iter:  # already has a plan
-            return True, {}
-        if not self.is_ready_to_plan():  # if all above are done, or just nobody nearby
-            return False, {}
+            return we_good, {}
+        if not self.agents_to_consider_are_finished():  # if all above are done, or just nobody nearby
+            return we_good, {}
         check_r = self.k_transform(**kwargs)  # basically just the k itself
         # consider all higher priority according to index
         agents_to_consider_list = list(self.agents_to_consider_dict.values())
@@ -145,12 +163,13 @@ class KMagnetPrPAgent(KSDSAgent):
         # build magnetic fields
         nei_magnets = build_nei_magnets(agents_to_consider_list, **kwargs)
         mag_cost_func = build_mag_cost_func(agents_to_consider_list, nei_magnets, **kwargs)
-        succeeded, info = self.calc_a_star_plan(v_constr_dict, e_constr_dict, perm_constr_dict, k_time=check_r,
+        we_good, info = self.calc_a_star_plan(v_constr_dict, e_constr_dict, perm_constr_dict, k_time=check_r,
                                                 mag_cost_func=mag_cost_func, **kwargs)
-        if succeeded:
+        if we_good:
             self.finished_k_iter = True
-        plot_magnet_field(self.path, nei_magnets)
-        return succeeded, info
+            self.create_magnet_field(**kwargs)
+            # plot_magnet_field(self.path, nei_magnets)
+        return we_good, info
 
 
 def create_agents(start_nodes, goal_nodes, nodes, nodes_dict, h_func, plotter, middle_plot, iter_limit, map_dim):
@@ -168,7 +187,7 @@ def create_agents(start_nodes, goal_nodes, nodes, nodes_dict, h_func, plotter, m
     return agents, agents_dict
 
 
-def all_find_nei(agents: List[KSDSAgent], **kwargs):
+def all_find_nei(agents: List[KMagnetPrPAgent], **kwargs):
     for agent in agents:
         # find_nei
         agent.update_nei(agents, **kwargs)
@@ -191,13 +210,13 @@ def all_plan(agents: List[KMagnetPrPAgent], alg_info, **kwargs):
 
     for agent in agents:
         start_time = time.time()
-        succeeded, info = agent.plan(**kwargs)
+        we_good, info = agent.plan(**kwargs)
         # stats
         end_time = time.time() - start_time
         runtime += end_time
         runtime_dist.append(end_time)
-        succeeded_list.append(succeeded)
-        if not succeeded:
+        succeeded_list.append(agent.finished_k_iter)
+        if not we_good:
             failed_paths_dict[agent.name] = agent.path_names
         if len(info) > 0:
             a_star_calls_counter += 1
@@ -217,7 +236,7 @@ def all_plan(agents: List[KMagnetPrPAgent], alg_info, **kwargs):
     return func_info
 
 
-def all_exchange_k_step_paths(agents: List[KMagnetPrPAgent], **kwargs):
+def all_exchange_data(agents: List[KMagnetPrPAgent], **kwargs):
     h = kwargs['h']
     # check_radius = k
     check_radius = h
@@ -226,7 +245,7 @@ def all_exchange_k_step_paths(agents: List[KMagnetPrPAgent], **kwargs):
     # exchange paths
     for agent in agents:
         start_time = time.time()
-        agent.create_magnet_field_and_exchange_paths(**kwargs)
+        agent.exchange_data(**kwargs)
         # stats
         end_time = time.time() - start_time
         runtime += end_time
@@ -291,13 +310,13 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
         kwargs['small_iteration'] = 0
         kwargs['number_of_finished'] = number_of_finished
 
-        all_find_nei(agents, **kwargs)  # agents
+        all_find_nei(agents, **kwargs)  # agents: find neighbours + reset
 
         # SMALL ITERATIONS
         while True:
             kwargs['small_iteration'] += 1
 
-            func_info = all_exchange_k_step_paths(agents, **kwargs)  # agents
+            func_info = all_exchange_data(agents, **kwargs)  # agents
             if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
                 return None, {'agents': agents, 'success_rate': 0}
 
@@ -307,7 +326,7 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
 
             if len(func_info['failed_paths_dict']) > 0:
                 print(f"\n###########################\nPRIORITY CHANGE \n###########################\n")
-                func_info = all_change_priority(agents, **kwargs)  # agents
+                func_info = all_change_priority(agents, **kwargs)  # agents: new index + reset
                 if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
                     return None, {'agents': agents, 'success_rate': 0}
 
@@ -366,10 +385,11 @@ def main():
     # --------------------------------------------------- #
     # for the Magnets-PP algorithm
     # magnet_w = 0
-    magnet_w = 1
+    # magnet_w = 1
     # magnet_w = 2
-    k = 30  # my planning
-    h = 30  # my step
+    magnet_w = 5
+    k = 5  # my planning
+    h = 5  # my step
     pref_paths_type = 'pref_index'
     p_h = 1
     p_l = 0

@@ -90,7 +90,7 @@ def reset_nodes(start, goal, nodes, **kwargs):
 
 def k_time_check(node_current, **kwargs):
     if 'k_time' in kwargs and kwargs['k_time'] is not None:
-        return node_current.t >= kwargs['k_time']
+        return node_current.t >= kwargs['k_time'] - 1
     return False
     # return node_current.t >= kwargs['k_time'] if 'k_time' in kwargs else False
 
