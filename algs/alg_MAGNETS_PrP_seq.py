@@ -173,6 +173,7 @@ def run_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs)
             alg_info['sol_quality'] = cost
             alg_info['runtime'] = runtime
             alg_info['a_star_calls_per_agent'] = [agent.stats_n_calls for agent in agents]
+            alg_info['space_metric'] = get_space_metric(plan, radius=10)
             return plan, alg_info
 
     return None, alg_info

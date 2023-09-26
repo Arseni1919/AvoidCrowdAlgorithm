@@ -38,7 +38,6 @@ class KSDSAgent:
         self.h = 0
         self.full_path = []
         self.full_path_names = []
-        self.map_dim = map_dim
 
         # stats
         self.stats_n_closed = 0
@@ -220,7 +219,8 @@ class KSDSAgent:
         for agent_name, path in paths_to_consider_dict.items():
             if check_r < len(path):
                 all_finished = False
-        if all_finished and self.path[-1].xy_name != self.goal_node.xy_name:
+                break
+        if all_finished and len(self.path) < check_r and self.path[-1].xy_name != self.goal_node.xy_name:
             self.init_plan(**kwargs)
             return False, info
         return succeeded, info
@@ -456,7 +456,7 @@ def all_exchange_k_step_paths(agents: List[KSDSAgent], **kwargs):
     return there_are_collisions, c_v, c_e, func_info
 
 
-def all_replan(agents: List[KSDSAgent], alg_info, **kwargs):
+def all_replan(agents: List, alg_info, **kwargs):
     # inner print
     i_run_str = f'[i_run: {kwargs["i_run"]}]' if 'i_run' in kwargs else ''
     img_str = f'[{kwargs["img_dir"]}]' if 'img_dir' in kwargs else ''

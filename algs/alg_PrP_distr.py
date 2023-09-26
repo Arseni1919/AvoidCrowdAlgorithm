@@ -53,8 +53,8 @@ class KPrPAgent(KSDSAgent):
         paths_to_consider_dict, names_to_consider_list = self.get_paths_to_consider_dict(**kwargs)
         v_constr_dict, e_constr_dict, _ = build_constraints(self.nodes, paths_to_consider_dict)
         perm_constr_dict = build_k_step_perm_constr_dict(self.nodes, paths_to_consider_dict, check_r)
-        succeeded, info = self.calc_a_star_plan(v_constr_dict, e_constr_dict, perm_constr_dict, k_time=check_r, **kwargs)
-        succeeded, info = self.check_if_all_around_finished(succeeded, info, paths_to_consider_dict, check_r, **kwargs)
+        succeeded_1, info = self.calc_a_star_plan(v_constr_dict, e_constr_dict, perm_constr_dict, k_time=check_r, **kwargs)
+        succeeded, info = self.check_if_all_around_finished(succeeded_1, info, paths_to_consider_dict, check_r, **kwargs)
         return succeeded, info
 
 
@@ -195,6 +195,7 @@ def run_k_distr_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs)
                 alg_info['n_steps'] = k_step_iteration + 1
                 alg_info['n_small_iters'] = float(np.mean(stats_small_iters_list))
                 alg_info['n_nei'] = np.sum([np.mean(agent.stats_nei_list) for agent in agents])
+                alg_info['space_metric'] = get_space_metric(cut_full_plans, radius=kwargs['k'])
                 # alg_info['avr_n_nei'] = np.mean([np.mean(agent.stats_nei_list) for agent in agents])
             return cut_full_plans, alg_info
 

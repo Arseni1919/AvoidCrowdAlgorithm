@@ -122,11 +122,11 @@ class Plotter:
 
         plot_a_star_calls_counters(self.ax[0, 3], info)
 
-        plot_n_nei(self.ax[1, 0], info)
+        plot_avr_nearby_agents(self.ax[1, 0], info)
 
-        plot_n_steps_iters(self.ax[1, 1], info)
+        plot_avr_distance(self.ax[1, 1], info)
 
-        plot_n_messages(self.ax[1, 2], info)
+        plot_n_nei(self.ax[1, 2], info)
 
         plot_n_expanded_cactus(self.ax[1, 3], info)
 

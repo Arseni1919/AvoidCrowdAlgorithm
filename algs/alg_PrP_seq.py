@@ -1,13 +1,7 @@
-import random
-import time
-import matplotlib.pyplot as plt
-import cProfile
-import pstats
 from algs.test_mapf_alg import test_mapf_alg_from_pic
-
 # from algs.metrics import check_for_collisions, c_v_check_for_agent, c_e_check_for_agent
 from algs.metrics import build_constraints, get_agents_in_conf, check_plan, get_alg_info_dict
-from functions import limit_is_crossed
+from functions import *
 from algs.alg_a_star_space_time import a_star_xyt
 from algs.alg_depth_first_a_star import df_a_star
 
@@ -55,7 +49,7 @@ def update_path(update_agent, higher_agents, nodes, nodes_dict, h_func, **kwargs
     return new_path, a_s_info
 
 
-def run_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
+def run_pp_seq(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
     runtime = 0
     plotter = kwargs['plotter'] if 'plotter' in kwargs else None
     final_plot = kwargs['final_plot'] if 'final_plot' in kwargs else True
@@ -115,6 +109,7 @@ def run_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, **kwargs):
             alg_info['sol_quality'] = cost
             alg_info['runtime'] = runtime
             alg_info['a_star_calls_per_agent'] = [agent.stats_n_calls for agent in agents]
+            alg_info['space_metric'] = get_space_metric(plan, radius=10)
             return plan, alg_info
 
     return plan, alg_info
@@ -151,7 +146,7 @@ def main():
     for i in range(3):
         print(f'\n[run {i}]')
         result, info = test_mapf_alg_from_pic(
-            algorithm=run_pp,
+            algorithm=run_pp_seq,
             alg_name='PP',
             a_star_func=a_star_xyt,
             img_dir=img_dir,

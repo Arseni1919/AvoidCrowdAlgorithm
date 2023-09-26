@@ -42,7 +42,8 @@ class KMagnetPrPAgent(KSDSAgent):
                  map_dim=None):
         super().__init__(index, start_node, goal_node, nodes, nodes_dict, h_func, plotter, middle_plot, iter_limit,
                          map_dim)
-        # nei
+        # spec for the alg
+        self.map_dim = map_dim
         self.finished_k_iter = False
         self.nei_finished_dict = {}
         self.agents_to_consider_dict = {}
@@ -363,7 +364,7 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
                 alg_info['n_steps'] = k_step_iteration + 1
                 alg_info['n_small_iters'] = float(np.mean(stats_small_iters_list))
                 alg_info['n_nei'] = np.sum([np.mean(agent.stats_nei_list) for agent in agents])
-                # alg_info['avr_n_nei'] = np.mean([np.mean(agent.stats_nei_list) for agent in agents])
+                alg_info['space_metric'] = get_space_metric(cut_full_plans, radius=kwargs['k'])
             return cut_full_plans, alg_info
 
         if k_step_iteration > k_step_iteration_limit - 1:
@@ -374,7 +375,7 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
 
 
 def main():
-    n_agents = 30
+    n_agents = 10
     # img_dir = 'my_map_10_10_room.map'  # 10-10
     img_dir = 'empty-48-48.map'  # 48-48
     # img_dir = 'random-64-64-10.map'  # 64-64

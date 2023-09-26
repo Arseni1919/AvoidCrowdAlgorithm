@@ -55,8 +55,8 @@ def plot_text_in_cactus(ax, l_x, l_y):
 
 
 def set_legend(ax, framealpha=None):
-    # to_put_legend = True
-    to_put_legend = False
+    to_put_legend = True
+    # to_put_legend = False
     if to_put_legend:
         if not framealpha:
             framealpha = 0
@@ -177,7 +177,7 @@ def get_list_runtime(statistics_dict, alg_name, n_agents_list, list_type, runs_p
     return curr_list
 
 
-def get_list_a_star(statistics_dict, alg_name, n_agents_list, list_type, is_json=False):
+def merge_agents_lists(statistics_dict, alg_name, n_agents_list, list_type, is_json=False):
     """
     {
         alg_name: {
@@ -418,7 +418,7 @@ def plot_a_star_calls_counters(ax, info):
 
         if alg_info['dist']:
             # get_list_a_star(statistics_dict, alg_name, n_agents_list, list_type, is_json=False)
-            acd_y = get_list_a_star(statistics_dict, alg_name, n_agents_list, 'a_star_calls_counter_dist', is_json)
+            acd_y = merge_agents_lists(statistics_dict, alg_name, n_agents_list, 'a_star_calls_counter_dist', is_json)
             acd_y.sort()
             acd_x = list(range(len(acd_y)))
             max_instances = max(max_instances, len(acd_x))
@@ -527,13 +527,13 @@ def plot_n_expanded_cactus(ax, info):
     for alg_name, (alg_func, alg_info) in algs_to_test_dict.items():
         index += 1
         # runtime
-        rt_y = get_list_a_star(statistics_dict, alg_name, n_agents_list, 'n_closed_per_run', is_json)
+        rt_y = merge_agents_lists(statistics_dict, alg_name, n_agents_list, 'n_closed_per_run', is_json)
         rt_y.sort()
         rt_x = list(range(len(rt_y)))
         max_instances = max(max_instances, len(rt_x))
 
         if alg_info['dist']:
-            l_y = get_list_a_star(statistics_dict, alg_name, n_agents_list, 'a_star_n_closed_dist', is_json)
+            l_y = merge_agents_lists(statistics_dict, alg_name, n_agents_list, 'a_star_n_closed_dist', is_json)
             l_y.sort()
             l_x = list(range(len(l_y)))
             max_instances = max(max_instances, len(l_x))
@@ -685,4 +685,76 @@ def plot_n_nei(ax, info):
     ax.set_xlim([min(n_agents_list) - 20, max(n_agents_list) + 20])
     ax.set_xticks(n_agents_list)
     ax.set_xlabel('N agents', labelpad=-1)
+    set_legend(ax)
+
+
+def plot_avr_distance(ax, info):
+    # stats_dict[alg_name][n_agents]['n_messages_per_agent'].extend(alg_info['n_messages_per_agent'])
+    ax.cla()
+    statistics_dict = info['statistics_dict']
+    algs_to_test_dict = info['algs_to_test_dict']
+    n_agents_list = info['n_agents_list']
+    is_json = info['is_json']
+
+    counter = 0
+    for alg_name, (alg_func, alg_info) in algs_to_test_dict.items():
+        line_style = f"-{get_line_or_marker(counter, 'm')}"
+        counter += 1
+        x_list = []
+        y_list = []
+        for n_agents in n_agents_list:
+            x_list.append(n_agents)
+            n_agents_number = n_agents
+            if is_json:
+                n_agents = str(n_agents)
+            y_list.append(np.mean(statistics_dict[alg_name][n_agents]['avr_distances']))
+
+        if len(y_list) > 0:
+            if 'color' in alg_info:
+                # ax.plot(x_list, y_list, '-o', label=f'{alg_name}', alpha=0.75, color=alg_info['color'])
+                ax.plot(x_list, y_list, line_style, label=f'{alg_name}', alpha=0.55, color=alg_info['color'])
+            else:
+                ax.plot(x_list, y_list, '-o', label=f'{alg_name}', alpha=0.75)
+
+    # ax.set_ylabel('n_messages_per_agent')
+    ax.set_xlim([min(n_agents_list) - 20, max(n_agents_list) + 20])
+    ax.set_xticks(n_agents_list)
+    ax.set_xlabel('N agents', labelpad=-1)
+    set_plot_title(ax, f'Avr. Distances From Neighbours')
+    set_legend(ax)
+
+
+def plot_avr_nearby_agents(ax, info):
+    # stats_dict[alg_name][n_agents]['n_messages_per_agent'].extend(alg_info['n_messages_per_agent'])
+    ax.cla()
+    statistics_dict = info['statistics_dict']
+    algs_to_test_dict = info['algs_to_test_dict']
+    n_agents_list = info['n_agents_list']
+    is_json = info['is_json']
+
+    counter = 0
+    for alg_name, (alg_func, alg_info) in algs_to_test_dict.items():
+        line_style = f"-{get_line_or_marker(counter, 'm')}"
+        counter += 1
+        x_list = []
+        y_list = []
+        for n_agents in n_agents_list:
+            x_list.append(n_agents)
+            n_agents_number = n_agents
+            if is_json:
+                n_agents = str(n_agents)
+            y_list.append(np.mean(statistics_dict[alg_name][n_agents]['avr_nearby_agents']))
+
+        if len(y_list) > 0:
+            if 'color' in alg_info:
+                # ax.plot(x_list, y_list, '-o', label=f'{alg_name}', alpha=0.75, color=alg_info['color'])
+                ax.plot(x_list, y_list, line_style, label=f'{alg_name}', alpha=0.55, color=alg_info['color'])
+            else:
+                ax.plot(x_list, y_list, '-o', label=f'{alg_name}', alpha=0.75)
+
+    # ax.set_ylabel('n_messages_per_agent')
+    ax.set_xlim([min(n_agents_list) - 20, max(n_agents_list) + 20])
+    ax.set_xticks(n_agents_list)
+    ax.set_xlabel('N agents', labelpad=-1)
+    set_plot_title(ax, f'Avr. N of Nearby Agents')
     set_legend(ax)

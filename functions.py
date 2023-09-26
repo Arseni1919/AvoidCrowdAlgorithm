@@ -102,3 +102,29 @@ def rename_nodes_in_path(path):
         node.t = t
         node.ID = f'{node.x}_{node.y}_{t}'
 
+
+def get_space_metric(plans, radius):
+    space_metric_dict = {
+        'all_distances': [],
+        'num_of_nearby_distances': 0
+    }
+    for agent_name_1, agent_name_2 in combinations(plans.keys(), 2):
+        space_metric_dict[agent_name_1] = [0]
+        space_metric_dict[agent_name_2] = [0]
+        plan_1 = plans[agent_name_1]
+        plan_2 = plans[agent_name_2]
+        min_len = min([len(plan_1), len(plan_2)])
+        for node_1, node_2 in zip(plan_1[:min_len], plan_2[:min_len]):
+            if abs(node_1.x - node_2.x) > radius or abs(node_1.y - node_2.y) > radius:
+                continue
+            # around the curr_node
+            distance = manhattan_distance_nodes(node_1, node_2)
+            space_metric_dict[agent_name_1].append(distance)
+            space_metric_dict[agent_name_2].append(distance)
+            space_metric_dict['all_distances'].append(distance)
+            if distance == 1:
+                space_metric_dict['num_of_nearby_distances'] += 1
+            if distance == 0:
+                raise RuntimeError('holly molly')
+    return space_metric_dict
+
