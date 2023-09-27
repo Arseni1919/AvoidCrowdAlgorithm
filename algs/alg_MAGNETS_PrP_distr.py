@@ -324,14 +324,16 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
             func_info = all_plan(agents, alg_info, **kwargs)  # agents - replan - implemented here
             if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
                 return None, {'agents': agents, 'success_rate': 0}
+            all_succeeded = func_info['all_succeeded']
 
             if len(func_info['failed_paths_dict']) > 0:
                 print(f"\n###########################\nPRIORITY CHANGE \n###########################\n")
                 func_info = all_change_priority(agents, **kwargs)  # agents: new index + reset
                 if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
                     return None, {'agents': agents, 'success_rate': 0}
+                continue
 
-            if func_info['all_succeeded']:
+            if all_succeeded:
                 break
 
         stats_small_iters_list.append(kwargs['small_iteration'])
