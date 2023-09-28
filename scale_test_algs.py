@@ -416,20 +416,20 @@ def main():
             'color': 'tab:blue',
         }),
 
-        'k-D-Mag-PP-0.001': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
-            'k': 5,
-            'h': 5,
-            'magnet_w': 0.001,
-            'reset_type': 'reset_step',
-            'pref_paths_type': 'pref_index',
-            'p_h': 1,
-            'p_l': 0,
-            'limit_type': 'dist_time',
-            # 'limit_type': 'dist_a_star_closed',
-            'dist': True,
-            'color': 'orange',
-        }),
-
+        # 'k-D-Mag-PP-0.001': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+        #     'k': 5,
+        #     'h': 5,
+        #     'magnet_w': 0.001,
+        #     'reset_type': 'reset_step',
+        #     'pref_paths_type': 'pref_index',
+        #     'p_h': 1,
+        #     'p_l': 0,
+        #     'limit_type': 'dist_time',
+        #     # 'limit_type': 'dist_a_star_closed',
+        #     'dist': True,
+        #     'color': 'orange',
+        # }),
+        #
         'k-D-Mag-PP-0.01': (run_k_distr_magnets_pp, {   # for random and empty - 10, for warehouse 30, for game 2: k=h=15
             'k': 5,
             'h': 5,
@@ -443,25 +443,25 @@ def main():
             'dist': True,
             'color': 'red',
         }),
-
-        'k-D-Mag-PP-0.1': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+        #
+        # 'k-D-Mag-PP-0.1': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+        #     'k': 5,
+        #     'h': 5,
+        #     'magnet_w': 0.1,
+        #     'reset_type': 'reset_step',
+        #     'pref_paths_type': 'pref_index',
+        #     'p_h': 1,
+        #     'p_l': 0,
+        #     'limit_type': 'dist_time',
+        #     # 'limit_type': 'dist_a_star_closed',
+        #     'dist': True,
+        #     'color': 'brown',
+        # }),
+        #
+        'k-D-Mag-PP-2': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
             'k': 5,
             'h': 5,
-            'magnet_w': 0.1,
-            'reset_type': 'reset_step',
-            'pref_paths_type': 'pref_index',
-            'p_h': 1,
-            'p_l': 0,
-            'limit_type': 'dist_time',
-            # 'limit_type': 'dist_a_star_closed',
-            'dist': True,
-            'color': 'brown',
-        }),
-
-        'k-D-Mag-PP-1': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
-            'k': 5,
-            'h': 5,
-            'magnet_w': 1,
+            'magnet_w': 2,
             'reset_type': 'reset_step',
             'pref_paths_type': 'pref_index',
             'p_h': 1,
@@ -498,7 +498,7 @@ def main():
     # n_agents_list = [2, 3, 4, 5, 6, 7, 8, 9, 10]
     # n_agents_list = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     # n_agents_list = [10, 30, 50, 70, 90, 110]
-    # n_agents_list = [50, 70, 90, 110, 130, 150]
+    n_agents_list = [50, 70, 90, 110, 130, 150]
     # n_agents_list = [ 400]  # !!!!!!!!!! LNS
     # n_agents_list = [30, 80, 130, 180, 230]  # !!!!!!!!!! game 1
     # n_agents_list = [330]
@@ -523,7 +523,7 @@ def main():
     # n_agents_list = [100, 120, 140, 160, 180, 200]
     # n_agents_list = [100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300]
     # n_agents_list = [100, 150, 200, 250, 300, 350, 400, 450, 500]
-    n_agents_list = [150, 200, 250, 300, 350, 400]
+    # n_agents_list = [150, 200, 250, 300, 350, 400]
     # n_agents_list = [300, 350, 400, 450, 500]
     # n_agents_list = [250, 300, 350, 400, 450, 500, 550]
 
@@ -552,8 +552,8 @@ def main():
     img_dir = 'room-32-32-4.map'  # 32-32
 
     # ------------------------------ LIMITS ------------------------------ #
-    # time_per_alg_limit = 0.1667  # approximately 10 seconds
-    time_per_alg_limit = 0.5  # 30 seconds
+    time_per_alg_limit = 0.1667  # approximately 10 seconds
+    # time_per_alg_limit = 0.5  # 30 seconds
     # time_per_alg_limit = 1  # According to PBS paper!
     # time_per_alg_limit = 0.1
     # time_per_alg_limit = 2

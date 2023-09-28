@@ -423,11 +423,11 @@ def main():
     # --------------------------------------------------- #
     # --------------------------------------------------- #
     # for the Magnets-PP algorithm
-    magnet_w = 0
+    # magnet_w = 0
     # magnet_w = 1
     # magnet_w = 2
     # magnet_w = 5
-    # magnet_w = 10
+    magnet_w = 10
     k = 5  # my planning
     h = 5  # my step
     pref_paths_type = 'pref_index'
