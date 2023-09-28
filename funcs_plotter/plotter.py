@@ -130,7 +130,7 @@ class Plotter:
 
         plot_avr_distance(self.ax[1, 1], info)
 
-        plot_n_nei(self.ax[1, 2], info)
+        # plot_n_nei(self.ax[1, 2], info)
 
         plot_n_expanded_cactus(self.ax[1, 3], info)
 
