@@ -521,7 +521,8 @@ def main():
     # n_agents_list = [20, 30, 40, 50, 60, 70, 80, 90, 100]
     # n_agents_list = [50, 100, 150, 200, 250, 300]
     # n_agents_list = [100, 120, 140, 160, 180, 200]
-    n_agents_list = [100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300]
+    # n_agents_list = [100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300]
+    n_agents_list = [200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400]
     # n_agents_list = [100, 150, 200, 250, 300, 350, 400, 450, 500]
     # n_agents_list = [150, 200, 250, 300, 350, 400]
     # n_agents_list = [300, 350, 400, 450, 500]
@@ -543,9 +544,9 @@ def main():
 
     # ------------------------------ MAPS ------------------------------ #
 
-    # img_dir = 'empty-32-32.map'  # 32-32
+    img_dir = 'empty-32-32.map'  # 32-32
     # img_dir = 'random-32-32-10.map'  # 32-32          | LNS | Up to 400 agents with w=5, h=2, lim=1min.
-    img_dir = 'room-32-32-4.map'  # 32-32
+    # img_dir = 'room-32-32-4.map'  # 32-32
     # img_dir = 'maze-32-32-2.map'  # 32-32
 
     # img_dir = 'empty-48-48.map'  # 48-48              | Up to 580 agents with h=w=5, lim=10sec.
