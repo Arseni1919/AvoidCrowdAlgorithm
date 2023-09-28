@@ -416,10 +416,10 @@ def main():
         #     'color': 'orange',
         # }),
         #
-        'k-D-Mag-PP-0.01': (run_k_distr_magnets_pp, {   # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+        'k-D-Mag-PP-0.1': (run_k_distr_magnets_pp, {   # for random and empty - 10, for warehouse 30, for game 2: k=h=15
             'k': 5,
             'h': 5,
-            'magnet_w': 0.01,
+            'magnet_w': 0.1,
             'reset_type': 'reset_step',
             'pref_paths_type': 'pref_index',
             'p_h': 1,
@@ -444,10 +444,10 @@ def main():
         #     'color': 'brown',
         # }),
         #
-        'k-D-Mag-PP-2': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+        'k-D-Mag-PP-1': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
             'k': 5,
             'h': 5,
-            'magnet_w': 2,
+            'magnet_w': 1,
             'reset_type': 'reset_step',
             'pref_paths_type': 'pref_index',
             'p_h': 1,
@@ -533,8 +533,8 @@ def main():
     # runs_per_n_agents = 10  # !!!!!!!!!!!!!!!!!
     # runs_per_n_agents = 5  # !!!!!!!!!!!!!!!!!
     # runs_per_n_agents = 4
-    runs_per_n_agents = 3
-    # runs_per_n_agents = 2
+    # runs_per_n_agents = 3
+    runs_per_n_agents = 2
     # runs_per_n_agents = 1
 
     # random_seed = True
@@ -545,8 +545,8 @@ def main():
 
     # img_dir = 'empty-32-32.map'  # 32-32
     # img_dir = 'random-32-32-10.map'  # 32-32          | LNS | Up to 400 agents with w=5, h=2, lim=1min.
-    # img_dir = 'room-32-32-4.map'  # 32-32
-    img_dir = 'maze-32-32-2.map'  # 32-32
+    img_dir = 'room-32-32-4.map'  # 32-32
+    # img_dir = 'maze-32-32-2.map'  # 32-32
 
     # img_dir = 'empty-48-48.map'  # 48-48              | Up to 580 agents with h=w=5, lim=10sec.
     # img_dir = 'random-64-64-10.map'  # 64-64          | Up to 580 agents with h=w=10, lim=10sec.

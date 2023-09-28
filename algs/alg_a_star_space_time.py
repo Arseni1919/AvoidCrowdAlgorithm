@@ -113,15 +113,16 @@ def build_successor_current_g(magnet_w, mag_cost_func, node_successor, successor
 
 
 def build_successor_h(h_func, node_successor, successor_current_t, goal, magnet_w, mag_cost_func, nodes_dict):
-    if magnet_w > 0:
-        costs_list = []
-        for nei_name in node_successor.neighbours:
-            nei_node = nodes_dict[nei_name]
-            mag_cost = mag_cost_func(nei_node.x, nei_node.y, successor_current_t+1)
-            costs_list.append(mag_cost)
-        successor_h = magnet_w * min(costs_list) + h_func(node_successor, goal)
-    else:
-        successor_h = h_func(node_successor, goal)
+    successor_h = h_func(node_successor, goal)
+    # if magnet_w > 0:
+    #     costs_list = []
+    #     for nei_name in node_successor.neighbours:
+    #         nei_node = nodes_dict[nei_name]
+    #         mag_cost = mag_cost_func(nei_node.x, nei_node.y, successor_current_t+1)
+    #         costs_list.append(mag_cost)
+    #     successor_h = magnet_w * min(costs_list) + h_func(node_successor, goal)
+    # else:
+    #     successor_h = h_func(node_successor, goal)
     return successor_h
 
 
