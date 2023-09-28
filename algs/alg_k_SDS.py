@@ -87,8 +87,6 @@ class KSDSAgent:
                                         plotter=self.plotter, middle_plot=self.middle_plot,
                                         iter_limit=self.iter_limit, k_time=k_time, agent_name=self.name)
         if new_path is not None:
-            if len(new_path) > k_time:
-                print()
             self.path = new_path
             self.h = self.path[-1].h
             succeeded = True
