@@ -48,6 +48,8 @@ class KMagnetPrPAgent(KSDSAgent):
         self.nei_finished_dict = {}
         self.agents_to_consider_dict = {}
         self.magnet_field = None
+        # if self.index != 19:
+        #     self.middle_plot = False
 
     def reset_k_step(self, **kwargs):
         k = kwargs['k']
@@ -88,7 +90,6 @@ class KMagnetPrPAgent(KSDSAgent):
     def change_priority(self, priority, **kwargs):
         self.index = priority
         self.name = f'agent_{self.index}'
-        self.reset_k_step(**kwargs)
 
     def get_magnet_list(self):
         # h_value = self.h_func(self.start_node, self.goal_node)
@@ -140,6 +141,19 @@ class KMagnetPrPAgent(KSDSAgent):
                 return False
         return True
 
+    def check_if_all_around_finished(self, succeeded, info, paths_to_consider_dict, check_r, **kwargs):
+        if succeeded:
+            all_finished = True
+            for agent_name, path in paths_to_consider_dict.items():
+                if len(path) > check_r - 1:
+                    all_finished = False
+                    break
+            on_the_same_spot = self.path[-1].xy_name == self.curr_node.xy_name
+            the_spot_is_not_the_goal = self.path[-1].xy_name != self.goal_node.xy_name
+            if all_finished and on_the_same_spot and the_spot_is_not_the_goal:
+                return False, info
+        return succeeded, info
+
     def plan(self, **kwargs):
         """
         Output options:
@@ -165,11 +179,13 @@ class KMagnetPrPAgent(KSDSAgent):
         nei_magnets = build_nei_magnets(agents_to_consider_list, **kwargs)
         mag_cost_func = build_mag_cost_func(agents_to_consider_list, nei_magnets, **kwargs)
         we_good, info = self.calc_a_star_plan(v_constr_dict, e_constr_dict, perm_constr_dict, k_time=check_r,
-                                                mag_cost_func=mag_cost_func, **kwargs)
+                                              mag_cost_func=mag_cost_func, **kwargs)
+        we_good, info = self.check_if_all_around_finished(we_good, info, paths_to_consider_dict, check_r, **kwargs)
         if we_good:
             self.finished_k_iter = True
             self.create_magnet_field(**kwargs)
-            # plot_magnet_field(self.path, nei_magnets)
+            if self.middle_plot:
+                plot_magnet_field(self.path, nei_magnets)
         return we_good, info
 
 
@@ -207,6 +223,7 @@ def all_plan(agents: List[KMagnetPrPAgent], alg_info, **kwargs):
     a_star_calls_counter, a_star_calls_counter_dist = 0, []
     a_star_n_closed, a_star_n_closed_dist = 0, [0]
     succeeded_list = []
+    not_succeeded_dict = {}
     failed_paths_dict = {}
 
     for agent in agents:
@@ -217,6 +234,8 @@ def all_plan(agents: List[KMagnetPrPAgent], alg_info, **kwargs):
         runtime += end_time
         runtime_dist.append(end_time)
         succeeded_list.append(agent.finished_k_iter)
+        if not agent.finished_k_iter:
+            not_succeeded_dict[agent.name] = agent.path
         if not we_good:
             failed_paths_dict[agent.name] = agent.path_names
         if len(info) > 0:
@@ -232,6 +251,7 @@ def all_plan(agents: List[KMagnetPrPAgent], alg_info, **kwargs):
         'a_star_n_closed': a_star_n_closed,
         'a_star_n_closed_dist': max(a_star_n_closed_dist),
         'all_succeeded': all(succeeded_list),
+        'not_succeeded_dict': not_succeeded_dict,
         'failed_paths_dict': failed_paths_dict,
     }
     return func_info
@@ -272,9 +292,11 @@ def all_change_priority(agents: List[KMagnetPrPAgent], **kwargs):
         end_time = time.time() - start_time
         runtime += end_time
         runtime_dist.append(end_time)
+    agents_dict = {i_agent.name: i_agent for i_agent in agents}
     func_info = {
         'runtime': runtime,
-        'dist_runtime': max(runtime_dist)
+        'dist_runtime': max(runtime_dist),
+        'agents_dict': agents_dict,
     }
     return func_info
 
@@ -285,7 +307,7 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
     if 'k_step_iteration_limit' in kwargs:
         k_step_iteration_limit = kwargs['k_step_iteration_limit']
     else:
-        k_step_iteration_limit = 200
+        k_step_iteration_limit = 1e6
         kwargs['k_step_iteration_limit'] = k_step_iteration_limit
     alg_name = kwargs['alg_name'] if 'alg_name' in kwargs else f'k-Magnets-PrP'
     iter_limit = kwargs['a_star_iter_limit'] if 'a_star_iter_limit' in kwargs else 1e100
@@ -310,6 +332,7 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
         kwargs['k_step_iteration'] = k_step_iteration
         kwargs['small_iteration'] = 0
         kwargs['number_of_finished'] = number_of_finished
+        straight_to_next_k_step = False
 
         all_find_nei(agents, **kwargs)  # agents: find neighbours + reset
 
@@ -325,16 +348,24 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
             if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
                 return None, {'agents': agents, 'success_rate': 0}
             all_succeeded = func_info['all_succeeded']
+            not_succeeded_dict = func_info['not_succeeded_dict']
+            failed_paths_dict = func_info['failed_paths_dict']
 
-            if len(func_info['failed_paths_dict']) > 0:
+            if len(failed_paths_dict) > 0:
                 print(f"\n###########################\nPRIORITY CHANGE \n###########################\n")
                 func_info = all_change_priority(agents, **kwargs)  # agents: new index + reset
+                agents_dict = func_info['agents_dict']
                 if check_if_limit_is_crossed(func_info, alg_info, **kwargs):
                     return None, {'agents': agents, 'success_rate': 0}
-                continue
+                straight_to_next_k_step = True
+                break
 
             if all_succeeded:
                 break
+
+        if straight_to_next_k_step:
+            print(f"\n###########################\nNO MOVEMENT \n###########################\n")
+            continue
 
         stats_small_iters_list.append(kwargs['small_iteration'])
         all_paths_are_finished, number_of_finished, func_info = all_move_k_steps(agents, **kwargs)  # agents
@@ -342,6 +373,9 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
             return None, {'agents': agents, 'success_rate': 0}
 
         full_plans = {agent.name: agent.full_path for agent in agents}
+        # there_is_col, c_v, c_e, cost = just_check_plans(full_plans)
+        # if there_is_col:
+        #     raise RuntimeError('aaaa')
         iteration_print(agents, full_plans, alg_name, alg_info, alg_info['runtime'], k_step_iteration)
         if all_paths_are_finished:
             # there_is_col_0, c_v_0, c_e_0, cost_0 = just_check_plans(full_plans)
@@ -377,9 +411,11 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
 
 
 def main():
-    n_agents = 10
+    n_agents = 90
     # img_dir = 'my_map_10_10_room.map'  # 10-10
-    img_dir = 'empty-48-48.map'  # 48-48
+    # img_dir = 'random-32-32-10.map'  # 32-32
+    img_dir = 'room-32-32-4.map'  # 32-32
+    # img_dir = 'empty-48-48.map'  # 48-48
     # img_dir = 'random-64-64-10.map'  # 64-64
     # img_dir = 'warehouse-10-20-10-2-1.map'  # 63-161
     # img_dir = 'lt_gallowstemplar_n.map'  # 180-251
@@ -387,10 +423,11 @@ def main():
     # --------------------------------------------------- #
     # --------------------------------------------------- #
     # for the Magnets-PP algorithm
-    # magnet_w = 0
+    magnet_w = 0
     # magnet_w = 1
     # magnet_w = 2
-    magnet_w = 5
+    # magnet_w = 5
+    # magnet_w = 10
     k = 5  # my planning
     h = 5  # my step
     pref_paths_type = 'pref_index'
@@ -404,7 +441,11 @@ def main():
 
     # random_seed = True
     random_seed = False
-    seed = 839
+    seed = 958
+    # plots:
+    online_plotting = False
+    # middle_plot = True
+    middle_plot = False
     PLOT_PER = 1
     PLOT_RATE = 0.5
     final_plot = True
@@ -439,6 +480,8 @@ def main():
             final_plot=final_plot,
             plot_per=PLOT_PER,
             plot_rate=PLOT_RATE,
+            online_plotting=online_plotting,
+            middle_plot=middle_plot,
         )
 
         if not random_seed:
@@ -450,7 +493,7 @@ def main():
     if to_use_profiler:
         profiler.disable()
         stats = pstats.Stats(profiler).sort_stats('cumtime')
-        stats.dump_stats('../stats/results_k_pp.pstat')
+        stats.dump_stats('../stats/results_k_magnets_pp.pstat')
 
 
 if __name__ == '__main__':

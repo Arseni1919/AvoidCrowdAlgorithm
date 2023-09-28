@@ -10,7 +10,7 @@ def plot_magnet_field(path, data):
     if data is not None:
         x_l, y_l, z_l = np.nonzero(data > 0)
         col = data[data > 0]
-        alpha_col = col / max(col)
+        alpha_col = col / max(col) if len(col) > 0 else 1
         # alpha_col = np.exp(col) / max(np.exp(col))
         cm = plt.colormaps['Reds']  # , cmap=cm
         ax.scatter(x_l, y_l, z_l, c=col, alpha=alpha_col, marker='s', cmap=cm)

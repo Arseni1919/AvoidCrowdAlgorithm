@@ -74,7 +74,7 @@ def test_mapf_alg_from_pic(algorithm, **kwargs):
     goal_nodes = random.sample(nodes, n_agents)
     # ------------------------- #
     # ------------------------- #
-    plotter = Plotter(map_dim=map_dim)
+    plotter = Plotter(map_dim=map_dim, online_plotting=kwargs['online_plotting'])
     # ------------------------- #
     # ------------------------- #
     # h_dict = build_heuristic_for_multiple_targets(goal_nodes, nodes, map_dim, plotter=plotter, middle_plot=False)
@@ -86,7 +86,7 @@ def test_mapf_alg_from_pic(algorithm, **kwargs):
     # ------------------------- #
     # ------------------------- #
     plan, info = algorithm(start_nodes=start_nodes, goal_nodes=goal_nodes, nodes=nodes, nodes_dict=nodes_dict, h_func=h_func,
-                           plotter=plotter, middle_plot=False, map_dim=map_dim, **kwargs)
+                           plotter=plotter, map_dim=map_dim, **kwargs)
 
     res_to_print = plan
     if plan:

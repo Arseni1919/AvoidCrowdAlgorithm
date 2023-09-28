@@ -5,16 +5,18 @@ from funcs_plotter.plot_functions import *
 
 
 class Plotter:
-    def __init__(self, map_dim=None, subplot_rows=2, subplot_cols=4):
+    def __init__(self, map_dim=None, subplot_rows=2, subplot_cols=4, online_plotting=True):
         if map_dim:
             self.side_x, self.side_y = map_dim
         self.subplot_rows = subplot_rows
         self.subplot_cols = subplot_cols
-        self.fig, self.ax = plt.subplots(subplot_rows, subplot_cols, figsize=(14, 7))
+        if online_plotting:
+            self.fig, self.ax = plt.subplots(subplot_rows, subplot_cols, figsize=(14, 7))
 
     def close(self):
         plt.close()
 
+    # online
     def plot_magnets_run(self, **kwargs):
         info = {
             'agent': kwargs['agent'],
@@ -27,7 +29,7 @@ class Plotter:
         plt.pause(0.001)
         # plt.pause(1)
 
-    def plot_lists(self, open_list, closed_list, start, goal=None, path=None, nodes=None, a_star_run=False):
+    def plot_lists(self, open_list, closed_list, start, goal=None, path=None, nodes=None, a_star_run=False, **kwargs):
         plt.close()
         self.fig, self.ax = plt.subplots(1, 3, figsize=(14, 7))
         field = np.zeros((self.side_x, self.side_y))
@@ -80,8 +82,9 @@ class Plotter:
 
         self.fig.tight_layout()
         # plt.pause(1)
-        plt.pause(0.01)
-        # plt.show()
+        # plt.pause(0.01)
+        self.fig.suptitle(f'{kwargs["agent_name"]}', fontsize=16)
+        plt.show()
 
     def plot_mapf_paths(self, paths_dict, nodes=None, **kwargs):
         plt.close()
@@ -104,6 +107,7 @@ class Plotter:
                 # plt.pause(1)
                 plt.pause(plot_rate)
 
+    # online
     def plot_big_test(self, statistics_dict, runs_per_n_agents, algs_to_test_dict, n_agents_list, img_png='',
                       is_json=False, **kwargs):
         print('big plot starts')

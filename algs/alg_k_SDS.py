@@ -74,28 +74,30 @@ class KSDSAgent:
         start_time = time.time()
         v_constr_dict, e_constr_dict, perm_constr_dict = self.prep_constraints(v_constr_dict, e_constr_dict, perm_constr_dict)
         magnet_w, mag_cost_func = self.prep_magnet_data(**kwargs)
-        if kwargs["small_iteration"] > 100:
-            print(f'\n ---------- ({kwargs["alg_name"]}) '
-                  f'[finished: {kwargs["number_of_finished"]}]'
-                  f'[step: {kwargs["k_step_iteration"]}]'
-                  f'[iter: {kwargs["small_iteration"]}] A* {self.name} ---------- \n')
+        # if kwargs["small_iteration"] > 100:
+        #     print(f'\n ---------- ({kwargs["alg_name"]}) '
+        #           f'[finished: {kwargs["number_of_finished"]}]'
+        #           f'[step: {kwargs["k_step_iteration"]}]'
+        #           f'[iter: {kwargs["small_iteration"]}] A* {self.name} ---------- \n')
         new_path, a_s_info = a_star_xyt(start=self.curr_node, goal=self.goal_node, nodes=self.nodes,
                                         nodes_dict=self.nodes_dict, h_func=self.h_func,
                                         v_constr_dict=v_constr_dict, e_constr_dict=e_constr_dict,
                                         perm_constr_dict=perm_constr_dict,
                                         magnet_w=magnet_w, mag_cost_func=mag_cost_func,
                                         plotter=self.plotter, middle_plot=self.middle_plot,
-                                        iter_limit=self.iter_limit, k_time=k_time)
+                                        iter_limit=self.iter_limit, k_time=k_time, agent_name=self.name)
         if new_path is not None:
+            if len(new_path) > k_time:
+                print()
             self.path = new_path
             self.h = self.path[-1].h
             succeeded = True
+            rename_nodes_in_path(self.path)
+            self.path_names = [node.xy_name for node in self.path]
         else:
             # self.h += len(self.path) - 1
             # self.path = [self.curr_node]
             succeeded = False
-        rename_nodes_in_path(self.path)
-        self.path_names = [node.xy_name for node in self.path]
         return succeeded, {'a_s_time': time.time() - start_time, 'a_s_info': a_s_info}
 
     def update_nei(self, agents, **kwargs):
@@ -201,17 +203,17 @@ class KSDSAgent:
         k = kwargs['k']
         # use also kwargs['k_step_iteration'] and kwargs['k_step_iteration_limit']
         # k = k + k * round(kwargs['small_iteration'] / 20)  kwargs['k_small_iter_limit']
-        ratio = kwargs['k_step_iteration'] / kwargs['k_step_iteration_limit']
+        # ratio = kwargs['k_step_iteration'] / kwargs['k_step_iteration_limit']
         # ratio = kwargs['small_iteration'] / kwargs['k_small_iter_limit']
-        if ratio > 0.87:
-            # print('!!!!!!!!!!!!')
-            return k * 8
-        if ratio > 0.75:
-            # print('!!!!!!!!!!!!')
-            return k * 4
-        if ratio > 0.5:
-            # print('!!!!!!!!!!!!')
-            return k * 2
+        # if ratio > 0.87:
+        #     # print('!!!!!!!!!!!!')
+        #     return k * 8
+        # if ratio > 0.75:
+        #     # print('!!!!!!!!!!!!')
+        #     return k * 4
+        # if ratio > 0.5:
+        #     # print('!!!!!!!!!!!!')
+        #     return k * 2
         return k
 
     def check_if_all_around_finished(self, succeeded, info, paths_to_consider_dict, check_r, **kwargs):
@@ -220,7 +222,9 @@ class KSDSAgent:
             if check_r < len(path):
                 all_finished = False
                 break
-        if all_finished and len(self.path) < check_r and self.path[-1].xy_name != self.goal_node.xy_name:
+        on_the_same_spot = self.path[-1].xy_name == self.curr_node.xy_name
+        the_spot_is_not_the_goal = self.path[-1].xy_name != self.goal_node.xy_name
+        if all_finished and on_the_same_spot and the_spot_is_not_the_goal:
             self.init_plan(**kwargs)
             return False, info
         return succeeded, info
@@ -319,7 +323,8 @@ class KSDSAgent:
         if max(k, h) > 1e6:
             return self.update_full_path_no_k()
 
-        step = h + 1
+        step = h
+        # step = h + 1
         # step = k + 1
         # step = 1
 
@@ -330,12 +335,16 @@ class KSDSAgent:
             self.full_path.extend(self.path[:step])
         else:
             self.full_path.extend(self.path[1:step])
+
         self.full_path_names = [node.xy_name for node in self.full_path]
         self.curr_node = self.full_path[-1]
         self.curr_node.t = 0
-        self.path = self.path[step - 1:]
-        rename_nodes_in_path(self.path)
-        self.path_names = [node.xy_name for node in self.path]
+        # self.path = self.path[step - 1:]
+        # self.path_names = [node.xy_name for node in self.path]
+        # rename_nodes_in_path(self.path)
+        self.path = None
+        self.path_names = []
+        rename_nodes_in_path(self.full_path)
         return self.curr_node.xy_name == self.goal_node.xy_name
 
     def cut_back_full_path(self):

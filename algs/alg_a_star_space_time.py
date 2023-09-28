@@ -95,6 +95,36 @@ def k_time_check(node_current, **kwargs):
     # return node_current.t >= kwargs['k_time'] if 'k_time' in kwargs else False
 
 
+def set_magnet_w_and_mag_cost_func(**kwargs):
+    if 'magnet_w' in kwargs:
+        magnet_w, mag_cost_func = kwargs['magnet_w'], kwargs['mag_cost_func']
+    else:
+        magnet_w, mag_cost_func = 0, None
+    return magnet_w, mag_cost_func
+
+
+def build_successor_current_g(magnet_w, mag_cost_func, node_successor, successor_current_t, node_current):
+    if magnet_w > 0:
+        mag_cost = mag_cost_func(node_successor.x, node_successor.y, successor_current_t)
+        successor_current_g = node_current.g + 1 + magnet_w * mag_cost
+    else:
+        successor_current_g = successor_current_t
+    return successor_current_g
+
+
+def build_successor_h(h_func, node_successor, successor_current_t, goal, magnet_w, mag_cost_func, nodes_dict):
+    if magnet_w > 0:
+        costs_list = []
+        for nei_name in node_successor.neighbours:
+            nei_node = nodes_dict[nei_name]
+            mag_cost = mag_cost_func(nei_node.x, nei_node.y, successor_current_t+1)
+            costs_list.append(mag_cost)
+        successor_h = magnet_w * min(costs_list) + h_func(node_successor, goal)
+    else:
+        successor_h = h_func(node_successor, goal)
+    return successor_h
+
+
 def a_star_xyt(start, goal, nodes, h_func,
                v_constr_dict=None, e_constr_dict=None, perm_constr_dict=None,
                plotter=None, middle_plot=False,
@@ -105,10 +135,7 @@ def a_star_xyt(start, goal, nodes, h_func,
     start_time = time.time()
 
     # magnets part
-    if 'magnet_w' in kwargs:
-        magnet_w, mag_cost_func = kwargs['magnet_w'], kwargs['mag_cost_func']
-    else:
-        magnet_w, mag_cost_func = 0, None
+    magnet_w, mag_cost_func = set_magnet_w_and_mag_cost_func(**kwargs)
 
     # start, goal, nodes = deepcopy_nodes(start, goal, nodes)  # heavy!
     start, goal, nodes = reset_nodes(start, goal, nodes, **kwargs)
@@ -155,11 +182,7 @@ def a_star_xyt(start, goal, nodes, h_func,
                 continue
 
             successor_current_t = node_current.t + 1  # h(now, next)
-            if magnet_w > 0:
-                mag_cost = mag_cost_func(node_successor.x, node_successor.y, successor_current_t)
-                successor_current_g = node_current.g + 1 + magnet_w * mag_cost
-            else:
-                successor_current_g = successor_current_t
+            successor_current_g = build_successor_current_g(magnet_w, mag_cost_func, node_successor, successor_current_t, node_current)
 
             # INSIDE OPEN LIST
             if node_successor_status == 'open_nodes':
@@ -175,7 +198,7 @@ def a_star_xyt(start, goal, nodes, h_func,
 
             # NOT IN CLOSED AND NOT IN OPEN LISTS
             else:
-                node_successor.h = h_func(node_successor, goal)
+                node_successor.h = build_successor_h(h_func, node_successor, successor_current_t, goal, magnet_w, mag_cost_func, nodes_dict)
             node_successor.t = successor_current_t
             node_successor.g = successor_current_g
             node_successor.parent = node_current
@@ -184,10 +207,10 @@ def a_star_xyt(start, goal, nodes, h_func,
         # open_nodes.remove(node_current)
         closed_nodes.add(node_current)
 
-        if plotter and middle_plot and iteration % 10 == 0:
-            plotter.plot_lists(open_list=open_nodes.get_nodes_list(),
-                               closed_list=closed_nodes.get_nodes_list(),
-                               start=start, goal=goal, nodes=nodes, a_star_run=True)
+        # if plotter and middle_plot and iteration % 10 == 0:
+        #     plotter.plot_lists(open_list=open_nodes.get_nodes_list(),
+        #                        closed_list=closed_nodes.get_nodes_list(),
+        #                        start=start, goal=goal, nodes=nodes, a_star_run=True)
         print(f'\r(a_star) iter: {iteration}, closed: {len(closed_nodes.heap_list)}', end='')
 
     path = None
@@ -201,7 +224,8 @@ def a_star_xyt(start, goal, nodes, h_func,
     if plotter and middle_plot:
         plotter.plot_lists(open_list=open_nodes.get_nodes_list(),
                            closed_list=closed_nodes.get_nodes_list(),
-                           start=start, goal=goal, path=path, nodes=nodes, a_star_run=True)
+                           start=start, goal=goal, path=path, nodes=nodes, a_star_run=True,
+                           agent_name=kwargs['agent_name'])
     # print('\rFinished A*.', end='')
     # if path is None:
     #     print()

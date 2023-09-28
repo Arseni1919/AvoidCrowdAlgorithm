@@ -458,10 +458,24 @@ def main():
             'color': 'brown',
         }),
 
-        'k-D-Mag-PP-0.5': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+        'k-D-Mag-PP-1': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
             'k': 5,
             'h': 5,
-            'magnet_w': 0.5,
+            'magnet_w': 1,
+            'reset_type': 'reset_step',
+            'pref_paths_type': 'pref_index',
+            'p_h': 1,
+            'p_l': 0,
+            'limit_type': 'dist_time',
+            # 'limit_type': 'dist_a_star_closed',
+            'dist': True,
+            'color': 'purple',
+        }),
+
+        'k-D-Mag-PP-10': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+            'k': 5,
+            'h': 5,
+            'magnet_w': 10,
             'reset_type': 'reset_step',
             'pref_paths_type': 'pref_index',
             'p_h': 1,
@@ -509,9 +523,9 @@ def main():
     # n_agents_list = [100, 120, 140, 160, 180, 200]
     # n_agents_list = [100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300]
     # n_agents_list = [100, 150, 200, 250, 300, 350, 400, 450, 500]
-    # n_agents_list = [150, 200, 250, 300, 350, 400]
+    n_agents_list = [150, 200, 250, 300, 350, 400]
     # n_agents_list = [300, 350, 400, 450, 500]
-    n_agents_list = [250, 300, 350, 400, 450, 500, 550]
+    # n_agents_list = [250, 300, 350, 400, 450, 500, 550]
 
     # runs_per_n_agents = 50
     # runs_per_n_agents = 25  # !!!!!!!!!!!!!!!!!
@@ -523,22 +537,24 @@ def main():
     # runs_per_n_agents = 2
     # runs_per_n_agents = 1
 
-    random_seed = True
-    # random_seed = False
-    seed = 941
+    # random_seed = True
+    random_seed = False
+    seed = 958
 
     # ------------------------------ MAPS ------------------------------ #
-    img_dir = 'empty-48-48.map'  # 48-48              | Up to 580 agents with h=w=5, lim=10sec.
+    # img_dir = 'empty-48-48.map'  # 48-48              | Up to 580 agents with h=w=5, lim=10sec.
     # img_dir = 'random-64-64-10.map'  # 64-64          | Up to 580 agents with h=w=10, lim=10sec.
     # img_dir = 'warehouse-10-20-10-2-1.map'  # 63-161  | Up to 330 agents with h=w=30, lim=10sec.
     # img_dir = 'ht_chantry.map'  # 162-141             | Up to 330 agents with h=w=30, lim=10sec.
 
     # img_dir = 'lt_gallowstemplar_n.map'  # 180-251    | Up to 230 agents with h=w=30, lim=10sec.
     # img_dir = 'random-32-32-10.map'  # 32-32          | LNS | Up to 400 agents with w=5, h=2, lim=1min.
+    img_dir = 'room-32-32-4.map'  # 32-32
 
     # ------------------------------ LIMITS ------------------------------ #
     # time_per_alg_limit = 0.1667  # approximately 10 seconds
-    time_per_alg_limit = 1  # According to PBS paper!
+    time_per_alg_limit = 0.5  # 30 seconds
+    # time_per_alg_limit = 1  # According to PBS paper!
     # time_per_alg_limit = 0.1
     # time_per_alg_limit = 2
     # time_per_alg_limit = 4
