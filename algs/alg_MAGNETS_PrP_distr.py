@@ -91,10 +91,26 @@ class KMagnetPrPAgent(KSDSAgent):
         self.index = priority
         self.name = f'agent_{self.index}'
 
-    def get_magnet_list(self):
-        # h_value = self.h_func(self.start_node, self.goal_node)
-        # h_value = 16
-        h_value = 4
+    def get_magnet_list(self, **kwargs):
+        magnet_type = kwargs['magnet_type']
+        if magnet_type == 'h':
+            h_value = self.h_func(self.start_node, self.goal_node)
+        elif magnet_type == '32':
+            h_value = 32
+        elif magnet_type == '16':
+            h_value = 16
+        elif magnet_type == '8':
+            h_value = 8
+        elif magnet_type == '4':
+            h_value = 4
+        elif magnet_type == '2':
+            h_value = 2
+        elif magnet_type == '1':
+            h_value = 1
+        elif magnet_type == '0':
+            h_value = 0
+        else:
+            raise RuntimeError('define a magnet_type!')
         magnet_list = [h_value]
         while h_value > 0.5:
             # h_value /= 4
@@ -120,7 +136,7 @@ class KMagnetPrPAgent(KSDSAgent):
     def create_magnet_field(self, **kwargs):
         if self.curr_node.xy_name == self.goal_node.xy_name:  # if the agent reached the goal
             return
-        magnet_list = self.get_magnet_list()
+        magnet_list = self.get_magnet_list(**kwargs)
         for i_time, node in enumerate(self.path):
             nei_nodes, nei_nodes_dict = get_nei_nodes(node, len(magnet_list), self.nodes_dict)
             self.set_area_circle(i_time, node, magnet_list, nei_nodes, nei_nodes_dict)
@@ -428,6 +444,13 @@ def main():
     # magnet_w = 2
     # magnet_w = 5
     magnet_w = 10
+    magnet_type = '32'
+    # magnet_type = '16'
+    # magnet_type = '8'
+    # magnet_type = '4'
+    # magnet_type = '2'
+    # magnet_type = '1'
+    # magnet_type = 'h'
     k = 5  # my planning
     h = 5  # my step
     pref_paths_type = 'pref_index'
@@ -463,6 +486,7 @@ def main():
             img_dir=img_dir,
             alg_name=alg_name,
             magnet_w=magnet_w,
+            magnet_type=magnet_type,
             k=k,
             h=h,
             reset_type=reset_type,

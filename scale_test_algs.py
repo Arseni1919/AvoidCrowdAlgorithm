@@ -416,19 +416,19 @@ def main():
         #     'color': 'orange',
         # }),
         #
-        'k-D-Mag-PP-0.1': (run_k_distr_magnets_pp, {   # for random and empty - 10, for warehouse 30, for game 2: k=h=15
-            'k': 5,
-            'h': 5,
-            'magnet_w': 0.1,
-            'reset_type': 'reset_step',
-            'pref_paths_type': 'pref_index',
-            'p_h': 1,
-            'p_l': 0,
-            'limit_type': 'dist_time',
-            # 'limit_type': 'dist_a_star_closed',
-            'dist': True,
-            'color': 'red',
-        }),
+        # 'k-D-Mag-PP-0.1': (run_k_distr_magnets_pp, {   # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+        #     'k': 5,
+        #     'h': 5,
+        #     'magnet_w': 0.1,
+        #     'reset_type': 'reset_step',
+        #     'pref_paths_type': 'pref_index',
+        #     'p_h': 1,
+        #     'p_l': 0,
+        #     'limit_type': 'dist_time',
+        #     # 'limit_type': 'dist_a_star_closed',
+        #     'dist': True,
+        #     'color': 'red',
+        # }),
         #
         # 'k-D-Mag-PP-0.1': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
         #     'k': 5,
@@ -444,10 +444,115 @@ def main():
         #     'color': 'brown',
         # }),
         #
-        'k-D-Mag-PP-1': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+        # 'k-D-Mag-PP-1': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+        #     'k': 5,
+        #     'h': 5,
+        #     'magnet_w': 1,
+        #     'reset_type': 'reset_step',
+        #     'pref_paths_type': 'pref_index',
+        #     'p_h': 1,
+        #     'p_l': 0,
+        #     'limit_type': 'dist_time',
+        #     # 'limit_type': 'dist_a_star_closed',
+        #     'dist': True,
+        #     'color': 'purple',
+        # }),
+
+        'mag-32': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
             'k': 5,
             'h': 5,
-            'magnet_w': 1,
+            'magnet_w': 10,
+            'magnet_type': '32',
+            'reset_type': 'reset_step',
+            'pref_paths_type': 'pref_index',
+            'p_h': 1,
+            'p_l': 0,
+            'limit_type': 'dist_time',
+            # 'limit_type': 'dist_a_star_closed',
+            'dist': True,
+            'color': 'red',
+        }),
+
+        'mag-16': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+            'k': 5,
+            'h': 5,
+            'magnet_w': 10,
+            'magnet_type': '16',
+            'reset_type': 'reset_step',
+            'pref_paths_type': 'pref_index',
+            'p_h': 1,
+            'p_l': 0,
+            'limit_type': 'dist_time',
+            # 'limit_type': 'dist_a_star_closed',
+            'dist': True,
+            'color': 'orange',
+        }),
+
+        'mag-8': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+            'k': 5,
+            'h': 5,
+            'magnet_w': 10,
+            'magnet_type': '8',
+            'reset_type': 'reset_step',
+            'pref_paths_type': 'pref_index',
+            'p_h': 1,
+            'p_l': 0,
+            'limit_type': 'dist_time',
+            # 'limit_type': 'dist_a_star_closed',
+            'dist': True,
+            'color': 'yellow',
+        }),
+
+        'mag-4': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+            'k': 5,
+            'h': 5,
+            'magnet_w': 10,
+            'magnet_type': '4',
+            'reset_type': 'reset_step',
+            'pref_paths_type': 'pref_index',
+            'p_h': 1,
+            'p_l': 0,
+            'limit_type': 'dist_time',
+            # 'limit_type': 'dist_a_star_closed',
+            'dist': True,
+            'color': 'green',
+        }),
+
+        'mag-2': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+            'k': 5,
+            'h': 5,
+            'magnet_w': 10,
+            'magnet_type': '2',
+            'reset_type': 'reset_step',
+            'pref_paths_type': 'pref_index',
+            'p_h': 1,
+            'p_l': 0,
+            'limit_type': 'dist_time',
+            # 'limit_type': 'dist_a_star_closed',
+            'dist': True,
+            'color': 'c',
+        }),
+
+        'mag-1': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+            'k': 5,
+            'h': 5,
+            'magnet_w': 10,
+            'magnet_type': '1',
+            'reset_type': 'reset_step',
+            'pref_paths_type': 'pref_index',
+            'p_h': 1,
+            'p_l': 0,
+            'limit_type': 'dist_time',
+            # 'limit_type': 'dist_a_star_closed',
+            'dist': True,
+            'color': 'blue',
+        }),
+
+        'mag-h': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+            'k': 5,
+            'h': 5,
+            'magnet_w': 10,
+            'magnet_type': 'h',
             'reset_type': 'reset_step',
             'pref_paths_type': 'pref_index',
             'p_h': 1,
@@ -458,10 +563,11 @@ def main():
             'color': 'purple',
         }),
 
-        'k-D-Mag-PP-10': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
+        'k-D-PP-0': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
             'k': 5,
             'h': 5,
-            'magnet_w': 10,
+            'magnet_w': 0,
+            'magnet_type': 'h',
             'reset_type': 'reset_step',
             'pref_paths_type': 'pref_index',
             'p_h': 1,
@@ -470,20 +576,6 @@ def main():
             # 'limit_type': 'dist_a_star_closed',
             'dist': True,
             'color': 'k',
-        }),
-
-        'k-D-PP-0': (run_k_distr_magnets_pp, {  # for random and empty - 10, for warehouse 30, for game 2: k=h=15
-            'k': 5,
-            'h': 5,
-            'magnet_w': 0,
-            'reset_type': 'reset_step',
-            'pref_paths_type': 'pref_index',
-            'p_h': 1,
-            'p_l': 0,
-            'limit_type': 'dist_time',
-            # 'limit_type': 'dist_a_star_closed',
-            'dist': True,
-            'color': 'tab:blue',
         }),
         ################################################################################################################
         ################################################################################################################
@@ -521,7 +613,8 @@ def main():
     # n_agents_list = [20, 30, 40, 50, 60, 70, 80, 90, 100]
     # n_agents_list = [50, 100, 150, 200, 250, 300]
     # n_agents_list = [100, 120, 140, 160, 180, 200]
-    n_agents_list = [100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300]
+    # n_agents_list = [100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300]
+    n_agents_list = [80, 100, 120, 140, 160, 180, 200, 220, 240, 260]
     # n_agents_list = [200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400]
     # n_agents_list = [100, 150, 200, 250, 300, 350, 400, 450, 500]
     # n_agents_list = [150, 200, 250, 300, 350, 400]
@@ -545,11 +638,11 @@ def main():
     # ------------------------------ MAPS ------------------------------ #
 
     # img_dir = 'empty-32-32.map'  # 32-32
-    # img_dir = 'random-32-32-20.map'  # 32-32
     # img_dir = 'random-32-32-10.map'  # 32-32          | LNS | Up to 400 agents with w=5, h=2, lim=1min.
+    img_dir = 'random-32-32-20.map'  # 32-32
     # img_dir = 'room-32-32-4.map'  # 32-32
     # img_dir = 'maze-32-32-2.map'  # 32-32
-    img_dir = 'den312d.map'  # 65-81
+    # img_dir = 'den312d.map'  # 65-81
 
     # img_dir = 'empty-48-48.map'  # 48-48              | Up to 580 agents with h=w=5, lim=10sec.
     # img_dir = 'random-64-64-10.map'  # 64-64          | Up to 580 agents with h=w=10, lim=10sec.
