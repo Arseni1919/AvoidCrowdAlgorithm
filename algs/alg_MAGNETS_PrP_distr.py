@@ -136,6 +136,9 @@ class KMagnetPrPAgent(KSDSAgent):
     def create_magnet_field(self, **kwargs):
         if self.curr_node.xy_name == self.goal_node.xy_name:  # if the agent reached the goal
             return
+        magnet_w = kwargs['magnet_w']
+        if magnet_w == 0:
+            return
         magnet_list = self.get_magnet_list(**kwargs)
         for i_time, node in enumerate(self.path):
             nei_nodes, nei_nodes_dict = get_nei_nodes(node, len(magnet_list), self.nodes_dict)
@@ -429,12 +432,19 @@ def run_k_distr_magnets_pp(start_nodes, goal_nodes, nodes, nodes_dict, h_func, *
 def main():
     n_agents = 90
     # img_dir = 'my_map_10_10_room.map'  # 10-10
+    # img_dir = 'empty-32-32.map'  # 32-32
+    # img_dir = 'room-32-32-4.map'  # 32-32
+    # img_dir = 'random-32-32-10.map'  # 32-32          | LNS | Up to 400 agents with w=5, h=2, lim=1min.
     # img_dir = 'random-32-32-10.map'  # 32-32
-    img_dir = 'room-32-32-4.map'  # 32-32
+    # img_dir = 'random-32-32-20.map'  # 32-32
+    # img_dir = 'room-32-32-4.map'  # 32-32
+    # img_dir = 'maze-32-32-2.map'  # 32-32
+    img_dir = 'den312d.map'  # 65-81
+
     # img_dir = 'empty-48-48.map'  # 48-48
-    # img_dir = 'random-64-64-10.map'  # 64-64
     # img_dir = 'warehouse-10-20-10-2-1.map'  # 63-161
     # img_dir = 'lt_gallowstemplar_n.map'  # 180-251
+    # img_dir = 'random-64-64-10.map'  # 64-64
 
     # --------------------------------------------------- #
     # --------------------------------------------------- #
@@ -444,13 +454,14 @@ def main():
     # magnet_w = 2
     # magnet_w = 5
     magnet_w = 10
-    magnet_type = '32'
+
+    # magnet_type = '32'
     # magnet_type = '16'
     # magnet_type = '8'
     # magnet_type = '4'
     # magnet_type = '2'
     # magnet_type = '1'
-    # magnet_type = 'h'
+    magnet_type = 'h'
     k = 5  # my planning
     h = 5  # my step
     pref_paths_type = 'pref_index'
@@ -458,7 +469,7 @@ def main():
     p_l = 0
     # reset_type = 'reset_start'
     reset_type = 'reset_step'
-    alg_name = f'{k}-{h}-Magnets-PrP'
+    alg_name = f'{k}-{h}-Mag-w_{magnet_w}-t_{magnet_type}'
     # --------------------------------------------------- #
     # --------------------------------------------------- #
 
