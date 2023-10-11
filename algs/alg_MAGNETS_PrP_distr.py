@@ -434,12 +434,11 @@ def main():
     # img_dir = 'my_map_10_10_room.map'  # 10-10
     # img_dir = 'empty-32-32.map'  # 32-32
     # img_dir = 'room-32-32-4.map'  # 32-32
-    # img_dir = 'random-32-32-10.map'  # 32-32          | LNS | Up to 400 agents with w=5, h=2, lim=1min.
-    # img_dir = 'random-32-32-10.map'  # 32-32
+    img_dir = 'random-32-32-10.map'  # 32-32          | LNS | Up to 400 agents with w=5, h=2, lim=1min.
     # img_dir = 'random-32-32-20.map'  # 32-32
     # img_dir = 'room-32-32-4.map'  # 32-32
     # img_dir = 'maze-32-32-2.map'  # 32-32
-    img_dir = 'den312d.map'  # 65-81
+    # img_dir = 'den312d.map'  # 65-81
 
     # img_dir = 'empty-48-48.map'  # 48-48
     # img_dir = 'warehouse-10-20-10-2-1.map'  # 63-161
